@@ -54,6 +54,8 @@ namespace lwsync
          , _guard()
       {}
 
+	  /** @brief Initialize resource object with its move constructor.
+        */
 	  critical_resource(resource_type&& resource_ref)
          : _resource(move(resource_ref))
          , _guard()

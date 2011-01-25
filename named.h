@@ -3,6 +3,10 @@
 
 #include <string>
 
+//!\file named.h
+//!
+//!\brief Defines the \ref flow::named "named" class.
+
 namespace flow
 {
 

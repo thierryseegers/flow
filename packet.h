@@ -5,6 +5,10 @@
 
 #include <vector>
 
+//!\file packet.h
+//!
+//!\brief Defines the flow::packet class.
+
 namespace flow
 {
 

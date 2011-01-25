@@ -9,6 +9,10 @@
 #include <string>
 #include <utility>
 
+//!\file pipe.h
+//!
+//!\brief Defines the \ref flow::pipe class.
+
 namespace flow
 {
 

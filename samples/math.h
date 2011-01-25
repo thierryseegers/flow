@@ -8,12 +8,16 @@
 #include <utility>
 #include <vector>
 
-//!\namespace math
+//!\file math.h
 //!
-//!\brief Concrete nodes that perform mathematical operation on their inputs.
+//!\brief Defines sample concrete node classes that perform mathematical operations on their inputs.
+
+//!\namespace flow::samples::math
+//!
+//!\brief Concrete nodes that perform mathematical operations on their inputs.
 namespace flow { namespace samples { namespace math {
 
-//!\brief Concrete transformer that uses operator+=() to sum input packets.
+//!\brief Concrete transformer that uses operator+= to sum input packets.
 template<typename T>
 class adder : public transformer
 {
@@ -75,7 +79,7 @@ public:
 	}
 };
 
-//!\brief Concrete transformer that uses operator+=() to add a constant to input packets.
+//!\brief Concrete transformer that uses operator+= to add a constant value to input packets.
 template<typename T>
 class const_adder : public transformer
 {

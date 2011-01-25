@@ -8,6 +8,10 @@
 #include <functional>
 #include <vector>
 
+//!\file timer.h
+//!
+//!\brief Defines the \ref flow::timer base class and the \ref flow::monotonous_timer concrete timer class.
+
 namespace flow
 {
 
@@ -77,6 +81,7 @@ public:
 				std::for_each(listeners_a->begin(), listeners_a->end(), std::mem_fun_ref(&std::function<void ()>::operator()));
 			}
 			
+			//TODO: wait until time has expired OR timer is stopped.
 			boost::thread::sleep(boost::get_system_time() + d_interval);
 		}
 	}

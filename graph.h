@@ -10,6 +10,10 @@
 #include <string>
 #include <map>
 
+//!\file graph.h
+//!
+//!\brief Defines the flow::graph class.
+
 namespace flow
 {
 

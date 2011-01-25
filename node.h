@@ -14,6 +14,10 @@
 #include <utility>
 #include <vector>
 
+//!\file node.h
+//!
+//!\brief Defines the node base classes and the pin classes.
+
 //!\namespace flow
 //!
 //!\brief All basic blocks to build a graph of packets streaming across nodes.
@@ -360,7 +364,7 @@ public:
 	//!
 	//! This function is called from the operator()() execution function.
 	//! It is the function that the concrete classes of producing nodes implement.
-	//! The body of this function should produce packets.
+	//! The body of this function should push packets on its outpins.
 	virtual void produce() = 0;
 };
 

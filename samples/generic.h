@@ -11,11 +11,15 @@
 #include <functional>
 #include <iostream>
 
-//!\namespace samples
+//!\file generic.h
+//!
+//!\brief Defines sample concrete node classes that perform generic tasks.
+
+//!\namespace flow::samples
 //!
 //!\brief Collection of concrete nodes.
 
-//!\namespace generic
+//!\namespace flow::samples::generic
 //!
 //!\brief Concrete nodes that perform generic tasks.
 namespace flow { namespace samples { namespace generic {
