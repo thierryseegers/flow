@@ -30,7 +30,7 @@ public:
 
 	virtual ~adder() {}
 
-	//!\brief Implmentation of producing::ready().
+	//!\brief Implementation of consumer::ready().
 	//!
 	//! When at least one packet is ready at each inputs, one packet from each input is popped.
 	//! They are then all summed and the sum is moved to the output.
@@ -92,7 +92,7 @@ public:
 
 	virtual ~const_adder() {}
 
-	//!\brief Implmentation of producing::ready().
+	//!\brief Implementation of consumer::ready().
 	virtual void ready()
 	{
 		std::unique_ptr<packet> packet_p = input(0).pop();

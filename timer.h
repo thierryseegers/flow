@@ -71,7 +71,7 @@ public:
 
 	virtual ~monotonous_timer() {}
 
-	//!\brief Implmentation of timer::operator()().
+	//!\brief Implementation of timer::operator()().
 	virtual void operator()()
 	{
 		while(!stopped())

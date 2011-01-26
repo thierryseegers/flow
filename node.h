@@ -473,10 +473,10 @@ public:
 
 	virtual ~transformer() {}
 
-	//!\brief Implmentation of node::operator()().
+	//!\brief Implementation of node::operator()().
 	virtual void operator()() { consumer::operator()(); }
 	
-	//!\brief consuming::ready() function to be implemented by concrete class.
+	//!\brief consumer::ready() function to be implemented by concrete class.
 	virtual void ready(size_t n) = 0;
 };
 

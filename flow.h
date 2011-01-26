@@ -61,10 +61,22 @@ framework providing the building blocks for streaming data packets through a gra
 of data-transforming nodes.
 A graph will typically be composed of \ref flow::producer "producer nodes", \ref flow::transformer "transformer nodes" and 
 \ref flow::consumer "consumer nodes".
-Nodes are connected to one another by attaching \ref flow::pipe "pipes" to their input and output \ref flow::pin "pins".
+Nodes are connected to one another by \ref flow::pipe "pipes" attached to their input and output \ref flow::pin "pins".
 
 As a library user, you are expected to write concrete node classes that perform the tasks you require.
 The graph and base node classes already provide the necessary API to build and run a graph.
+
+Here's an example of a simple graph. 
+The two producers nodes could be capturing data from some hardware or be generating a steady stream of data on their own. 
+The transformer node processes the data coming in from both producers. 
+The transformer's output data finally goes to a consumer node. 
+
+\image html ./introduction_graph_simple.png "Data flow for a simple graph"
+
+Should we need to monitor the data coming in from <tt>producer 2</tt>, we can \ref flow::samples::generic::tee "tee" it to another consumer node.
+This new consumer node could save all the data it receives to a file or log it in real-time without preserving it.
+
+\image html ./introduction_graph_tee.png "Data flow for a graph with a tee transformer node"
 
 \section considerations Technical considerations
 

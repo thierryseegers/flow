@@ -104,7 +104,7 @@ public:
 		*d_awaken_m.access() = true;
 	}
 
-	//!\brief Implmentation of producing::ready()
+	//!\brief Implementation of consumer::ready()
 	//!
 	//! If stop() has been called, it returns immediately.
 	//! If a packet has no consumption time specified, the packet is streamed immediately.
@@ -162,7 +162,7 @@ public:
 
 	virtual ~tee() {}
 
-	//!\brief Implmentation of producing::ready().
+	//!\brief Implementation of consumer::ready().
 	//!
 	//! The original input packet is moved to the first output pipe.
 	//! It is also copied into the rest of the ouput pipes.
@@ -195,7 +195,7 @@ public:
 
 	virtual ~delay() {}
 
-	//!\brief Implementation of producing::ready().
+	//!\brief Implementation of consumer::ready().
 	//!
 	//! If a packet has no set consumption time, then its consumption is set to the time at which this node has received the packet plus the given delay.
 	virtual void ready(size_t)
