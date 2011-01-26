@@ -40,7 +40,11 @@ namespace lwsync
    class monitor : public critical_resource<Resource, Sync_policy>
    {
       typedef critical_resource<Resource, Sync_policy> inherited;
+   
    public:
+      // So g++ doesn't confuse with unistd.h/access().
+      using critical_resource<Resource, Sync_policy>::access;
+
       /** @name Critical resource typedefs redefinintion.
         * Redefine all critical resource typedefs. Some compilers doesn't search
         * for names in base class in case if base class is template instantiated
