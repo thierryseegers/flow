@@ -75,6 +75,7 @@ The transformer's output data finally goes to a consumer node.
 
 Should we need to monitor the data coming in from <tt>producer 2</tt>, we can \ref flow::samples::generic::tee "tee" it to another consumer node.
 This new consumer node could save all the data it receives to a file or log it in real-time without preserving it.
+The \ref flow::samples::generic::tee "tee" transformer node is a \ref samples "sample concrete node" that duplicates incoming data to all its outputs.
 
 \image html ./introduction_graph_tee.png "Data flow for a graph with a tee transformer node"
 
@@ -84,11 +85,11 @@ This implementation:
  - uses templates heavily.
  - requires RTTI.
  - depends on the following C++0x's features:
-	- auto keyword.
-	- nullptr constant.
-	- r-value reference.
-	- move constructor and move function.
-	- unique_ptr.
+	- auto keyword
+	- lambda expression
+	- r-value reference
+	- move constructor and move function
+	- unique_ptr
  - depends on thirdparty libraries, see \ref thirdparty.
  - has been tested with VS2010.
 
@@ -123,6 +124,11 @@ only a single entity -pipe or node- owns a data packet.
 flow is multi-threaded in that the \ref flow::graph "graph" assigns a thread of execution to each of its nodes.
 The lifetime of these threads is already taken care by \ref flow::graph "graph".
 As a library user, the only mutli-threaded code you would write is whatever would go beyond graph management.
+
+The thread is started by \ref flow::graph "graph" by passing a reference to the node object to boost::thread. 
+Since the application passes a shared_ptr to a node to the graph, 
+it is possible for the application to modify the node's state while it is running.
+It must do so in a thread-safe manner.
 
 \subsection consumption_time Consumption time
 
@@ -220,10 +226,6 @@ Finally, the adder's output is connected to an \ref flow::samples::generic::ostr
 This node simply streams the data packets it receives to a std::ostream of our choice, std::cout in this case.
 
 \include hello_world.cpp
-
-\note If you don't see the example code, add \c "./examples" (without quotes) to your Doxyfile's EXAMPLE_PATH. 
-This example code is linked to \c examples/hello_world.cpp.
-
 */
 
 /*!
@@ -257,8 +259,4 @@ Here's the output of a run of about 30 seconds:
 4 * 8 = 32
 2 * 9 = 18
 \endcode
-
-\note If you don't see the example code, add \c "./examples" (without quotes) to your Doxyfile's EXAMPLE_PATH. 
-This example code is linked to \c examples/multiplier.cpp.
-
 */

@@ -183,7 +183,7 @@ public:
 	}
 };
 
-//!\brief Concrete transformer that adds a delay to a packet consumption time.
+//!\brief Concrete transformer that adds a delay to a packet's consumption time.
 class delay : public transformer
 {
 	boost::posix_time::time_duration d_offset;

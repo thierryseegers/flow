@@ -141,10 +141,10 @@ public:
 	//!
 	//! Used by the consuming node to move a packet from the pipe to consume.
 	//!
-	//!\return A pointer to the next packet in the pipe. nullptr if there is no packet.
+	//!\return A pointer to the next packet in the pipe, empty pointer if there is no packet.
 	virtual std::unique_ptr<packet> pop()
 	{
-		if(!d_packets.size()) return nullptr;
+		if(!d_packets.size()) return std::unique_ptr<packet>();
 
 		std::unique_ptr<packet> packet_p(std::move(d_packets.front()));
 		

@@ -52,11 +52,11 @@ public:
 		if(all)
 		{
 			// Gather the terms in a container.
-			std::vector<std::unique_ptr<packet> > terms(ins());
+			std::vector<std::unique_ptr<packet>> terms;
 
 			for(size_t i = 0; i != ins(); ++i)
 			{
-				terms[i] = input(i).pop();
+				terms.emplace_back(std::move(input(i).pop()));
 			}
 
 			// Start the sum as equal to the first term.

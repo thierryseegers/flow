@@ -135,6 +135,15 @@ public:
 	//!\param state_m_r Reference to the node's state monitor.
 	inpin(const std::string& name_r, lwsync::monitor<state>& state_m_r) : pin(name_r), d_state_m_r(state_m_r) {}
 
+	//!\brief Copy constructor.
+	inpin& operator=(const inpin& inpin_r)
+	{
+		d_pipe_cr_sp = inpin_r.d_pipe_cr_sp;
+		d_state_m_r = inpin_r.d_state_m_r;
+
+		return *this;
+	}
+
 	virtual ~inpin() {}
 
 	//!\brief The direction of this pin.
@@ -165,19 +174,19 @@ public:
 
 	//!\brief Extracts a packet from the pipe.
 	//!
-	//!\return The next packet to be consumed if the inpin is connected to ap pipe and the pipe is not empty, nullptr otherwise.
+	//!\return The next packet to be consumed if the inpin is connected to a pipe and the pipe is not empty, empty pointer otherwise.
 	virtual std::unique_ptr<packet> pop()
 	{
-		if(!d_pipe_cr_sp) return nullptr;
+		if(!d_pipe_cr_sp) return std::unique_ptr<packet>();
 
 		auto pipe_m_a = d_pipe_cr_sp->access();
-		return pipe_m_a->length() ? pipe_m_a->pop() : nullptr;
+		return pipe_m_a->length() ? pipe_m_a->pop() : std::unique_ptr<packet>();
 	}
 
 	//!\brief Notifies this pin that a packet has been queued to the pipe.
 	//!
 	//! When a producing node has moved a packet to the pipe, that node's outpin will call this function on the connected inpin.
-	//! If this inpin's owning node state is flow::::started, it sets the state to flow::incoming to signal the node there is a packet to be consumed.
+	//! If this inpin's owning node state is flow::started, it sets the state to flow::incoming to signal the node there is a packet to be consumed.
 	virtual void incoming()
 	{
 		auto state_m_a = d_state_m_r.access();
@@ -224,7 +233,7 @@ public:
 	{
 		if(!d_pipe_cr_sp) return false;
 
-		inpin* inpin_p = nullptr;
+		inpin* inpin_p = 0;
 		{
 			auto pipe_cr_a = d_pipe_cr_sp->access();
 			if(pipe_cr_a->push(std::move(packet_p)))
@@ -238,7 +247,7 @@ public:
 			inpin_p->incoming();
 		}
 
-		return inpin_p == nullptr;
+		return inpin_p == 0;
 	}
 };
 
@@ -258,7 +267,7 @@ public:
 	//!\brief Move constructor.
 	node(node&& node_rr) : named(node_rr), d_state_m(std::move(node_rr.d_state_m))
 	{}
-
+	
 	virtual ~node() {}
 
 	//!\brief Sets this node's state to flow::start_requested.

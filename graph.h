@@ -22,10 +22,10 @@ namespace flow
 //! When starting or stopping a graph, nodes are started and stopped in a fashion to minize build-up of packets.
 class graph : public named
 {
-	typedef std::map<std::string, std::unique_ptr<node> > nodes_t;
+	typedef std::map<std::string, std::shared_ptr<node> > nodes_t;
 	nodes_t d_producers, d_transformers, d_consumers;
 
-	typedef std::map<std::string, boost::thread> threads_t;
+	typedef std::map<std::string, boost::thread*> threads_t;
 	threads_t d_threads;
 
 public:
@@ -39,28 +39,28 @@ public:
 	//!\brief Adds a node to the graph.
 	//!
 	//! The node will be disconnected.
-	virtual void add(std::unique_ptr<node> node_p)
+	virtual void add(std::shared_ptr<node> node_p)
 	{
 		if(dynamic_cast<transformer*>(node_p.get()))
 		{
-			d_transformers[node_p->name()] = std::move(node_p);
+			d_transformers[node_p->name()] = node_p;
 		}
 		else if(dynamic_cast<producer*>(node_p.get()))
 		{
-			d_producers[node_p->name()] = std::move(node_p);
+			d_producers[node_p->name()] = node_p;
 		}
 		else if(dynamic_cast<consumer*>(node_p.get()))
 		{
-			d_consumers[node_p->name()] = std::move(node_p);
+			d_consumers[node_p->name()] = node_p;
 		}
 	}
 
 	//!\brief Removes a node from the graph.
 	//!
 	//!\param name_r The name of the node to remove.
-	virtual std::unique_ptr<node> remove(const std::string& name_r)
+	virtual std::shared_ptr<node> remove(const std::string& name_r)
 	{
-		std::unique_ptr<node> p;
+		std::shared_ptr<node> p;
 
 		nodes_t *nodes_p;
 		auto i = find(name_r, nodes_p);
@@ -87,7 +87,7 @@ public:
 				}
 			}
 
-			p = std::move(i->second);
+			p = i->second;
 			nodes_p->erase(i);
 		}
 
@@ -133,7 +133,7 @@ public:
 		{
 			if(d_threads.find(i.first) == d_threads.end())
 			{
-				d_threads[i.first] = boost::thread(boost::ref(*i.second));
+				d_threads[i.first] = new boost::thread(boost::ref(*i.second));
 			}
 			else
 			{
@@ -175,7 +175,11 @@ public:
 			graph::threads_t::iterator j = d_threads.find(i.first);
 			if(j != d_threads.end())
 			{
-				if(join) j->second.join();
+				if(join)
+				{
+					j->second->join();
+				}
+				delete j->second;
 				d_threads.erase(j);
 			}
 		};
@@ -189,7 +193,7 @@ public:
 	//!
 	//!\param name_r The name of the node to find.
 	//!
-	//!\return A pointer to the node if found, nullptr otherwise.
+	//!\return A pointer to the node if found, 0 otherwise.
 	virtual node* find(const std::string& name_r)
 	{
 		nodes_t *nodes_p;
@@ -200,13 +204,13 @@ public:
 			return i->second.get();
 		}
 
-		return nullptr;
+		return 0;
 	}
 
 private:
 	virtual nodes_t::iterator find(const std::string& name_r, nodes_t*& nodes_pr)
 	{
-		nodes_pr = nullptr;
+		nodes_pr = 0;
 
 		auto i = d_producers.find(name_r);
 

@@ -1,6 +1,8 @@
 #include "flow.h"
 #include "samples/generic.h"
 
+#include <boost/thread.hpp>
+
 #include <ctime>
 #include <iostream>
 #include <random>
@@ -37,11 +39,11 @@ public:
 		if(all)
 		{
 			// Gather the terms in a container.
-			std::vector<std::unique_ptr<flow::packet>> terms(ins());
+			std::vector<std::unique_ptr<flow::packet>> terms;
 
 			for(size_t i = 0; i != ins(); ++i)
 			{
-				terms[i] = input(i).pop();
+				terms.emplace_back(std::move(input(i).pop()));
 			}
 
 			// Start the product as equal to the first term.
@@ -89,15 +91,15 @@ int main()
 	variate_generator<default_random_engine, uniform_int_distribution<size_t>> number_generator(dre, uniform);
 
 	// Create two generators, using a reference to the number generator (and not a copy, otherwise they'll generate the same numbers).
-	g.add(unique_ptr<flow::producer>(new flow::samples::generic::generator<int>(mt, std::ref(number_generator), "g1")));
-	g.add(unique_ptr<flow::producer>(new flow::samples::generic::generator<int>(mt, std::ref(number_generator), "g2")));
+	g.add(make_shared<flow::samples::generic::generator<int>>(mt, std::ref(number_generator), "g1"));
+	g.add(make_shared<flow::samples::generic::generator<int>>(mt, std::ref(number_generator), "g2"));
 	
 	// Include a multiplication_expressifier with two inputs.
 	// We specify its inputs to be ints, but its output will always be a string.
-	g.add(unique_ptr<flow::transformer>(new multiplication_expressifier<int>(2, "me1")));
+	g.add(make_shared<multiplication_expressifier<int>>(2, "me1"));
 
 	// Include a consumer that just prints the data packets to std::cout.
-	g.add(unique_ptr<flow::consumer>(new flow::samples::generic::ostreamer<string>(cout, "o1")));
+	g.add(make_shared<flow::samples::generic::ostreamer<string>>(cout, "o1"));
 
 	// Connect the two generators to the multiplication_expressifier.
 	g.connect("g1", 0, "me1", 0);

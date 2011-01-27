@@ -1,6 +1,9 @@
+
 #include "flow.h"
 #include "samples/math.h"
 #include "samples/generic.h"
+
+#include <boost/thread.hpp>
 
 #include <iostream>
 #include <string>
@@ -31,15 +34,15 @@ int main()
 	flow::graph g;
 
 	// Include in the graph three generators, one with each function defined above.
-	g.add(unique_ptr<flow::producer>(new flow::samples::generic::generator<string>(mt, hello, "g1")));
-	g.add(unique_ptr<flow::producer>(new flow::samples::generic::generator<string>(mt, space, "g2")));
-	g.add(unique_ptr<flow::producer>(new flow::samples::generic::generator<string>(mt, world, "g3")));
+	g.add(make_shared<flow::samples::generic::generator<string>>(mt, hello, "g1"));
+	g.add(make_shared<flow::samples::generic::generator<string>>(mt, space, "g2"));
+	g.add(make_shared<flow::samples::generic::generator<string>>(mt, world, "g3"));
 	
 	// Include an adder with three inputs.
-	g.add(unique_ptr<flow::transformer>(new flow::samples::math::adder<string>(3, "a1")));
+	g.add(make_shared<flow::samples::math::adder<string>>(3, "a1"));
 
 	// Include a consumer that just prints the data packets to std::cout.
-	g.add(unique_ptr<flow::consumer>(new flow::samples::generic::ostreamer<string>(cout, "o1")));
+	g.add(make_shared<flow::samples::generic::ostreamer<string>>(cout, "o1"));
 
 	// Connect all three generators to the adder.
 	g.connect("g1", 0, "a1", 0);
