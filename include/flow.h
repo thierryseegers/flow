@@ -57,12 +57,14 @@
 \section introduction Introduction
 
 flow is a headers-only <a href="http://en.wikipedia.org/wiki/C%2B%2B0x">C++0x</a> 
-framework providing the building blocks for streaming data packets through a graph 
-of data-transforming nodes.
-A graph will typically be composed of \ref flow::producer "producer nodes", \ref flow::transformer "transformer nodes" and 
+framework which provides the building blocks for streaming data packets through a graph 
+of data-transforming nodes. 
+Note that this library has nothing to do with computer networking. 
+In the context of this framework, a data packet is essentially a slice of a data stream.
+
+A \ref flow::graph will typically be composed of \ref flow::producer "producer nodes", \ref flow::transformer "transformer nodes" and 
 \ref flow::consumer "consumer nodes".
 Nodes are connected to one another by \ref flow::pipe "pipes" attached to their input and output \ref flow::pin "pins".
-
 As a library user, you are expected to write concrete node classes that perform the tasks you require.
 The graph and base node classes already provide the necessary API to build and run a graph.
 
@@ -89,21 +91,21 @@ This implementation:
 	- lambda expression
 	- r-value reference
 	- move constructor and move function
-	- unique_ptr
+	- unique_ptr and shared_ptr
  - depends on thirdparty libraries, see \ref thirdparty.
  - has been tested with VS2010.
 
-It is recommended to install the Graphviz tool to generate the Doxygen documentation. 
-The inheritance and collaboration diagrams Graphviz generates are invaluable.
-
-The Visual Studio solution expects the following user macros to be set:
+It is not required to use the included Visual Studio solution since this library is composed of headers only.
+The solution's only purpose is to run the example code.
+The solution expects the following user macros to be set 
+(best set through <a href="http://blog.gockelhut.com/2009/11/visual-studio-2010-property-sheets-and.html">property sheets</a>):
  - ThirdpartyIncludeDir: the directory where thirdparty libraries' headers are located.
  - ThirdpartyLibDir: the directory where thirdparty libraries' binaries are located.
 
 \section thirdparty Use of thirdparty libraries
 
  - <a href="http://www.boost.org/">boost</a>: the file graph.h uses the boost library's threading facilities. 
-	The files packet.h and timer.h use the boost library's date and time facilities.
+	The files packet.h and timer.h use boost's date_time library.
  - <a href="http://www.codeproject.com/KB/threads/lwsync.aspx">lwsync</a>: node.h 
 	uses lwsync::critical_resource<T> and lwsync::monitor<T> to perform  resource 
 	synchronization. This headers-only library internally uses boost::thread by default. The 
@@ -117,7 +119,7 @@ The Visual Studio solution expects the following user macros to be set:
 
 When flowing through the graph, \ref flow::packet "data packets" are wrapped in std::unique_ptr. 
 This helps memory managment tremendously and enforces the idea that, at any point in time, 
-only a single entity -pipe or node- owns a data packet.
+only a single entity -pipe or node- is responsible for a data packet.
 
 \subsection thread_per_node A thread per node
 
@@ -150,7 +152,7 @@ This feature serves two purposes:
 
 \section improvements Future improvements
 
- - I'll think of something. I'm sure.
+ - Support for gcc. (Currently, with g++ v. 4.5.0, compilation is successful but execution is not.)
 
 \section samples Samples concrete nodes
 
