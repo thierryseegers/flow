@@ -30,7 +30,7 @@ class graph : public named
 
 public:
 	//!\param name_r The name of this graph.
-	graph(const std::string& name_r = "graph") : named(name_r)
+	graph(const std::string name_r = "graph") : named(name_r)
 	{}
 
 	virtual ~graph()
