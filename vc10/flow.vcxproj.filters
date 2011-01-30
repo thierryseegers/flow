@@ -26,31 +26,31 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\flow.h">
+    <ClInclude Include="..\include\flow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\graph.h">
+    <ClInclude Include="..\include\graph.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\named.h">
+    <ClInclude Include="..\include\named.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\node.h">
+    <ClInclude Include="..\include\node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\packet.h">
+    <ClInclude Include="..\include\packet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\pipe.h">
+    <ClInclude Include="..\include\pipe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\timer.h">
+    <ClInclude Include="..\include\timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\samples\generic.h">
+    <ClInclude Include="..\include\samples\generic.h">
       <Filter>Header Files\Samples</Filter>
     </ClInclude>
-    <ClInclude Include="..\samples\math.h">
+    <ClInclude Include="..\include\samples\math.h">
       <Filter>Header Files\Samples</Filter>
     </ClInclude>
   </ItemGroup>
