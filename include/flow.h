@@ -93,7 +93,7 @@ This implementation:
 	- move constructor and move function
 	- unique_ptr and shared_ptr
  - depends on thirdparty libraries, see \ref thirdparty.
- - has been tested with VS2010.
+ - has been tested with VS2010 and gcc v. 4.5.2.
 
 It is not required to use the included Visual Studio solution since this library is composed of headers only.
 The solution's only purpose is to run the example code.
@@ -152,7 +152,7 @@ This feature serves two purposes:
 
 \section improvements Future improvements
 
- - Support for gcc. (Currently, with g++ v. 4.5.0, compilation is successful but execution is not.)
+ - I'll think of something. I'm sure.
 
 \section samples Samples concrete nodes
 
