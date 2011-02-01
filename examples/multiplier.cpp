@@ -66,7 +66,8 @@ public:
 			string expression = ss.str();
 
 			// Make a packet with the expression.
-			std::vector<unsigned char> data(sizeof expression);
+			std::vector<unsigned char> data(sizeof(string));
+			new(&data[0]) string;
 			*reinterpret_cast<string*>(&data[0]) = expression;
 
 			std::unique_ptr<flow::packet> p(new flow::packet(std::move(data)));
@@ -77,6 +78,24 @@ public:
 	}
 };
 
+// variate_generator class not found in gcc v. 4.5.x's std namespace and
+// the one in tr1 is incompatible with std::uniform_int_distribution.
+#if defined(__GNUG__)
+template<typename E, typename D>
+class variate_generator
+{
+	E e_;
+	D d_;
+
+public:
+	typedef typename D::result_type result_type;
+
+	variate_generator(E e, D d) : e_(e), d_(d) {}
+
+    result_type operator()() { return d_(e_); }
+};
+#endif
+
 int main()
 {
 	// Create a timer that will fire every three seconds.
@@ -86,7 +105,7 @@ int main()
 	flow::graph g;
 
 	// Instantiate a random number generator with a uniform distribution of the number 0 to 10.
-	default_random_engine dre(static_cast<unsigned long>(time(0)));	
+	default_random_engine dre(static_cast<unsigned long>(time(0)));
 	uniform_int_distribution<size_t> uniform(0, 10);
 	variate_generator<default_random_engine, uniform_int_distribution<size_t>> number_generator(dre, uniform);
 
