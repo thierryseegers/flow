@@ -68,7 +68,8 @@ public:
 			});
 
 			// Make a packet with the sum data.
-			std::vector<unsigned char> data(sizeof sum);
+			std::vector<unsigned char> data(sizeof(T));
+			new(&data[0]) T;
 			*reinterpret_cast<T*>(&data[0]) = sum;
 
 			std::unique_ptr<packet> sum_up(new packet(std::move(data)));

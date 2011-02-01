@@ -68,6 +68,7 @@ public:
 		if(*d_state_m.const_access() != stop_requested)
 		{
 			std::vector<unsigned char> data(sizeof(T));
+			new(&data[0]) T;
 			*reinterpret_cast<T*>(&data[0]) = d_gen_f();
 
 			std::unique_ptr<packet> packet_p(new packet(std::move(data)));
