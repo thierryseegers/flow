@@ -1,5 +1,5 @@
 /*
-	(C) Copyright Thierry Seegers 2010. Distributed under the following license:
+	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
 
