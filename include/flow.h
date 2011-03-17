@@ -1,4 +1,4 @@
-/*
+﻿/*
 	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
@@ -51,7 +51,7 @@
 \li \ref improvements
 \li \ref samples
 \li \ref examples
-\li \ref history
+\li \ref thanks
 \li \ref license
 
 \section introduction Introduction
@@ -164,22 +164,10 @@ They are found in the \ref flow::samples::generic and \ref flow::samples::math n
  - \subpage hello_world
  - \subpage multiplier
 
-\section history History
+\section thanks Thanks
 
- Years ago I was part of a team developing audio software for an 
- embedded platform. This team was part of a larger group with its other 
- teams focused on other multimedia aspects.
-
- The software platform we used had a generic data streaming layer. 
- Since all the software was written in C, so was that layer. 
- At the time, it was evident to me that this kind of library could be 
- elegantly written in C++. Alas, suggesting that the entire group use a 
- different tool chain was out of the question. Suggesting that I, a young'un, 
- rewrite this critical and widely used layer was also a lost cause.
-
- Fast forward to now and I'm itching to learn to use C++0x just like I learned 
- C++ and I'm telling myslef: "Well, why the heck not!" I wanted to do it. 
- I still do. I will!
+ - Dušan Rodina, maker of <a href="http://www.softwareideas.net/en/Default.aspx">Software Ideas Modeler</a>.
+   Modeler was used to create the graph diagrams in the \ref introduction.
 
 \section license License
 
