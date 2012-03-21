@@ -1,0 +1,325 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<sim-project version="4.86">
+  <meta>
+    <name>flow</name>
+    <authors>Thierry Seegers</authors>
+    <description />
+  </meta>
+  <management>
+    <persons />
+    <tasks />
+    <requirements />
+    <issues />
+    <to-dos />
+  </management>
+  <types>
+    <type-sets>
+      <type-set file="UmlTypes.xml" />
+    </type-sets>
+    <custom-types />
+  </types>
+  <items>
+    <item id="di223717777851422051" cid="ELEM001" type="dfd-external" name="producer 1" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di222830759508915137" cid="ELEM001" type="dfd-external" name="producer 2" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di351723623399013902" cid="ELEM001" type="dfd-process" name="transformer" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di969073431922755966" cid="ELEM002" type="dfd-external" name="consumer" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di126734911298785750" cid="ELEM001" type="dfd-external" name="consumer" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di382970620913874828" cid="ELEM001" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di315063288249928130" cid="ELEM002" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di921413012383968386" cid="ELEM003" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di936104751197066039" cid="ELEM001" type="dfd-external" name="producer 1" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di816514907628073022" cid="ELEM001" type="dfd-external" name="producer 2" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di868541688981636055" cid="ELEM001" type="dfd-process" name="transformer" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di531566856219683506" cid="ELEM001" type="dfd-external" name=" consumer 1" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di582265544130459824" cid="ELEM001" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di778387476177579491" cid="ELEM002" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di914733108342538834" cid="ELEM003" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di590272262219158081" cid="ELEM002" type="dfd-process" name="tee" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di137033116260887494" cid="ELEM001" type="dfd-process" name="tee" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di234434188785450622" cid="ELEM004" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di179280200265450228" cid="ELEM005" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di116872910696354432" cid="ELEM001" type="dfd-external" name=" consumer 2" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+    <item id="di973514791629379406" cid="ELEM006" type="dfd-data-flow" name="" style-class="" is-abstract="false">
+      <stereotypes />
+      <tagged-values />
+      <documentation />
+      <associated-diagrams />
+      <owned-items />
+      <style class="default" />
+    </item>
+  </items>
+  <models>
+    <model id="p115872137868363262" name="Model 1" type="" namespace="">
+      <documentation />
+      <sub-models />
+      <diagram type="data-flow" id="p530980081580620935" name="introduction_simple">
+        <meta>
+          <authors />
+          <description />
+          <creation-date>01/25/2011 23:24:32</creation-date>
+          <change-date>01/25/2011 23:26:07</change-date>
+          <revision-count>0</revision-count>
+          <version />
+        </meta>
+        <documentation />
+        <layer name="Default" visible="true" enabled="true" locked="false">
+          <item id="di223717777851422051" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="63" ay="53" awidth="120" aheight="31" x="63" y="53" width="0" height="31" />
+          </item>
+          <item id="di222830759508915137" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="64" ay="116" awidth="120" aheight="31" x="64" y="116" width="0" height="31" />
+          </item>
+          <item id="di351723623399013902" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="241" ay="74" awidth="120" aheight="55" x="241" y="74" width="0" height="55" />
+          </item>
+          <item id="di126734911298785750" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="418" ay="86" awidth="120" aheight="31" x="418" y="86" width="0" height="31" />
+          </item>
+          <item id="di382970620913874828" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="relation">
+            <layout line-style="oblique" lock-start-point="false" lock-end-point="false" name-position="10,-10" x1="183" y1="79" x2="242" y2="97">
+              <points>
+                <point x="183" y="79" />
+                <point x="242" y="97" />
+              </points>
+            </layout>
+            <relation from="di223717777851422051" to="di351723623399013902" />
+          </item>
+          <item id="di315063288249928130" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="relation">
+            <layout line-style="oblique" lock-start-point="false" lock-end-point="false" name-position="10,-10" x1="184" y1="122" x2="242" y2="106">
+              <points>
+                <point x="184" y="122" />
+                <point x="242" y="106" />
+              </points>
+            </layout>
+            <relation from="di222830759508915137" to="di351723623399013902" />
+          </item>
+          <item id="di921413012383968386" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="relation">
+            <layout line-style="oblique" lock-start-point="false" lock-end-point="false" name-position="10,-10" x1="361" y1="102" x2="418" y2="102">
+              <points>
+                <point x="361" y="102" />
+                <point x="418" y="102" />
+              </points>
+            </layout>
+            <relation from="di351723623399013902" to="di126734911298785750" />
+          </item>
+        </layer>
+      </diagram>
+      <diagram type="data-flow" id="p694859252834639397" name="introduction_tee">
+        <meta>
+          <authors />
+          <description />
+          <creation-date>01/25/2011 23:31:07</creation-date>
+          <change-date>01/25/2011 23:32:39</change-date>
+          <revision-count>0</revision-count>
+          <version />
+        </meta>
+        <documentation />
+        <layer name="Default" visible="true" enabled="true" locked="false">
+          <item id="di936104751197066039" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="63" ay="53" awidth="120" aheight="31" x="63" y="53" width="0" height="31" />
+          </item>
+          <item id="di816514907628073022" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="64" ay="116" awidth="120" aheight="31" x="64" y="116" width="0" height="31" />
+          </item>
+          <item id="di868541688981636055" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="378" ay="40" awidth="120" aheight="55" x="378" y="40" width="0" height="55" />
+          </item>
+          <item id="di531566856219683506" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="543" ay="53" awidth="120" aheight="31" x="543" y="53" width="0" height="31" />
+          </item>
+          <item id="di582265544130459824" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="relation">
+            <layout line-style="oblique" lock-start-point="false" lock-end-point="false" name-position="10,-10" x1="183" y1="68" x2="378" y2="68">
+              <points>
+                <point x="183" y="68" />
+                <point x="378" y="68" />
+              </points>
+            </layout>
+            <relation from="di936104751197066039" to="di868541688981636055" />
+          </item>
+          <item id="di914733108342538834" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="relation">
+            <layout line-style="oblique" lock-start-point="false" lock-end-point="false" name-position="10,-10" x1="498" y1="68" x2="543" y2="68">
+              <points>
+                <point x="498" y="68" />
+                <point x="543" y="68" />
+              </points>
+            </layout>
+            <relation from="di868541688981636055" to="di531566856219683506" />
+          </item>
+          <item id="di137033116260887494" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="226" ay="106" awidth="120" aheight="55" x="226" y="106" width="0" height="55" />
+          </item>
+          <item id="di234434188785450622" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="relation">
+            <layout line-style="oblique" lock-start-point="false" lock-end-point="false" name-position="10,-10" x1="184" y1="133" x2="226" y2="133">
+              <points>
+                <point x="184" y="133" />
+                <point x="226" y="133" />
+              </points>
+            </layout>
+            <relation from="di816514907628073022" to="di137033116260887494" />
+          </item>
+          <item id="di179280200265450228" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="relation">
+            <layout line-style="oblique" lock-start-point="false" lock-end-point="false" name-position="10,-10" x1="341" y1="123" x2="383" y2="79">
+              <points>
+                <point x="341" y="123" />
+                <point x="383" y="79" />
+              </points>
+            </layout>
+            <relation from="di137033116260887494" to="di868541688981636055" />
+          </item>
+          <item id="di116872910696354432" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="entity">
+            <layout ax="544" ay="118" awidth="120" aheight="31" x="544" y="118" width="0" height="31" />
+          </item>
+          <item id="di973514791629379406" show-cid="false" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" type="relation">
+            <layout line-style="oblique" lock-start-point="false" lock-end-point="false" name-position="10,-10" x1="346" y1="134" x2="544" y2="134">
+              <points>
+                <point x="346" y="134" />
+                <point x="544" y="134" />
+              </points>
+            </layout>
+            <relation from="di137033116260887494" to="di116872910696354432" />
+          </item>
+        </layer>
+      </diagram>
+    </model>
+  </models>
+</sim-project>
