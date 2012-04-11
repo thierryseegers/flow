@@ -1,5 +1,5 @@
 ﻿/*
-	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
+	(C) Copyright Thierry Seegers 2010-2012. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
 
@@ -86,14 +86,14 @@ The \ref flow::samples::generic::tee "tee" transformer node is a \ref samples "s
 This implementation:
  - uses templates heavily.
  - requires RTTI.
- - depends on the following C++0x's features:
+ - depends on the following C++11's features:
 	- auto keyword
 	- lambda expression
 	- r-value reference
 	- move constructor and move function
 	- unique_ptr and shared_ptr
  - depends on thirdparty libraries, see \ref thirdparty.
- - has been tested with VS2010 and gcc v. 4.5.2.
+ - has been tested with Visual Studio 11 Beta.
 
 It is not required to use the included Visual Studio solution since this library is composed of headers only.
 The solution's only purpose is to run the example code.

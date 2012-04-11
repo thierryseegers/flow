@@ -4,12 +4,12 @@
 #include "node.h"
 #include "timer.h"
 
-#include <boost/date_time.hpp>
-#include <boost/thread.hpp>
 #include <lwsync/monitor.hpp>
 
+#include <chrono>
 #include <functional>
 #include <iostream>
+#include <thread>
 
 //!\file generic.h
 //!
@@ -84,7 +84,7 @@ class ostreamer : public consumer
 {
 	std::ostream& d_o_r;
 
-	boost::thread d_sleep_t;
+	std::thread d_sleep_t;
 
 	lwsync::monitor<bool> d_awaken_m;
 
@@ -118,18 +118,16 @@ public:
 
 		while((packet_p = input(0).pop()) && (*d_state_m.const_access() != stop_requested))
 		{
-			using namespace boost::posix_time;
-
-			if(packet_p->consumption_time().is_not_a_date_time())
+			if(packet_p->consumption_time() == packet::time_point_type())
 			{
 				// This packet has no set consumption time. Consume it immediately.
 				d_o_r << *reinterpret_cast<T*>(&packet_p->data()[0]) << std::endl;
 			}
-			else if(packet_p->consumption_time() > microsec_clock::universal_time())
+			else if(packet_p->consumption_time() > std::chrono::high_resolution_clock::now())
 			{
 				// This packet must be consumed at a set time.
 				// Create a thread that sleeps the required delay and rings the alarm.
-				d_sleep_t = boost::thread(std::mem_fun(&ostreamer::sleep), this, packet_p->consumption_time());
+				d_sleep_t = std::thread(std::mem_fun(&ostreamer::sleep), this, packet_p->consumption_time());
 
 				// Wait until the sleep thread is done or stop was requested.
 				*d_awaken_m.wait() = false;
@@ -143,9 +141,9 @@ public:
 	}
 
 private:
-	virtual void sleep(const boost::posix_time::ptime& time_r)
+	virtual void sleep(const packet::time_point_type& time_r)
 	{
-		boost::thread::sleep(time_r);
+		std::this_thread::sleep_until(time_r);
 
 		*d_awaken_m.access() = true;
 	}
@@ -187,12 +185,13 @@ public:
 //!\brief Concrete transformer that adds a delay to a packet's consumption time.
 class delay : public transformer
 {
-	boost::posix_time::time_duration d_offset;
+	std::chrono::milliseconds d_offset;
 
 public:
 	//!\param offset_r The delay to add to the packets' consumption time.
 	//!\param name_r The name to give this node.
-	delay(const boost::posix_time::time_duration& offset_r, const std::string& name_r = "delay") : node(name_r), transformer(name_r, 1, 1), d_offset(offset_r) {}
+	template<typename Duration>
+	delay(const Duration& offset_r, const std::string& name_r = "delay") : node(name_r), transformer(name_r, 1, 1), d_offset(offset_r) {}
 
 	virtual ~delay() {}
 
@@ -205,9 +204,9 @@ public:
 
 		while(packet_p = input(0).pop())
 		{
-			if(packet_p->consumption_time().is_not_a_date_time())
+			if(packet_p->consumption_time() == packet::time_point_type())
 			{
-				packet_p->consumption_time() = boost::posix_time::microsec_clock::universal_time() + d_offset;
+				packet_p->consumption_time() = std::chrono::high_resolution_clock::now() + d_offset;
 			}
 			else
 			{
@@ -224,7 +223,7 @@ public:
 #endif
 
 /*
-	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
+	(C) Copyright Thierry Seegers 2010-2012. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
 

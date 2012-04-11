@@ -1,14 +1,13 @@
 #include "flow.h"
 #include "samples/generic.h"
 
-#include <boost/thread.hpp>
-
-#include <ctime>
+#include <chrono>
 #include <functional>
 #include <iostream>
 #include <random>
 #include <sstream>
 #include <string>
+#include <thread>
 
 using namespace std;
 
@@ -82,7 +81,7 @@ public:
 int main()
 {
 	// Create a timer that will fire every three seconds.
-	flow::monotonous_timer mt(boost::posix_time::seconds(3));
+	flow::monotonous_timer mt(chrono::seconds(3));
 
 	// Instantiate a graph. It starts out empty.
 	flow::graph g;
@@ -91,8 +90,7 @@ int main()
 	random_device rd;
 	default_random_engine engine(rd());
 	uniform_int_distribution<size_t> uniform(0, 10);
-	//function<int ()> generator = bind(uniform, ref(engine));
-	auto generator = [&engine, &uniform](){ return uniform(engine); };
+	auto generator = bind(uniform, ref(engine));
 
 	// Create two generators.
 	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g1"));
@@ -113,7 +111,7 @@ int main()
 	g.connect("me1", 0, "o1", 0);
 
 	// Start the timer on its own thread so it doesn't block us here.
-	boost::thread mt_t(boost::ref(mt));
+	thread mt_t(ref(mt));
 
 	// Start the graph! Now we should see multiplication expressions printed to the standard output.
 	g.start();

@@ -1,8 +1,7 @@
 #if !defined(FLOW_PACKET_H)
 	 #define FLOW_PACKET_H
 
-#include <boost/date_time.hpp>
-
+#include <chrono>
 #include <vector>
 
 //!\file packet.h
@@ -20,16 +19,20 @@ namespace flow
 //! If the packet arrives too late, the consumer node will discard it.
 class packet
 {
+public:
+	typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point_type;
+
+private:
 	std::vector<unsigned char> d_data;
 
-	boost::posix_time::ptime d_consumption_time;
+	time_point_type d_consumption_time;
 
 public:
 	//!\brief Data will be moved, not copied. Time of consumption is optional.
 	//!
 	//!\param data Bytes to be moved.
 	//!\param consumption_time The time at which a consumer node should consume the data.
-	packet(const std::vector<unsigned char>&& data, const boost::posix_time::ptime& consumption_time = boost::posix_time::not_a_date_time)
+	packet(const std::vector<unsigned char>&& data, const time_point_type& consumption_time = time_point_type())
 		: d_data(std::move(data)), d_consumption_time(consumption_time) {}
 
 	virtual ~packet() {}
@@ -41,7 +44,7 @@ public:
 	virtual std::vector<unsigned char>& data() { return d_data; }
 
 	//!\brief Reference to the time of consumption.
-	virtual boost::posix_time::ptime& consumption_time() { return d_consumption_time; }
+	virtual time_point_type& consumption_time() { return d_consumption_time; }
 };
 
 }
@@ -49,7 +52,7 @@ public:
 #endif
 
 /*
-	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
+	(C) Copyright Thierry Seegers 2010-2012. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
 

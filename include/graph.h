@@ -4,11 +4,10 @@
 #include "named.h"
 #include "node.h"
 
-#include <boost/thread.hpp>
-
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
+#include <thread>
 
 //!\file graph.h
 //!
@@ -25,7 +24,7 @@ class graph : public named
 	typedef std::map<std::string, std::shared_ptr<node> > nodes_t;
 	nodes_t d_producers, d_transformers, d_consumers;
 
-	typedef std::map<std::string, boost::thread*> threads_t;
+	typedef std::map<std::string, std::thread*> threads_t;
 	threads_t d_threads;
 
 public:
@@ -129,11 +128,12 @@ public:
 	//! If a node was already present and had previously been started, node::start() is called.
 	virtual void start()
 	{
-		auto start_f = [this](std::pair<const nodes_t::key_type, nodes_t::mapped_type>& i)
+		auto start_f = [this](nodes_t::value_type& i)
 		{
 			if(d_threads.find(i.first) == d_threads.end())
 			{
-				d_threads[i.first] = new boost::thread(boost::ref(*i.second));
+//				d_threads[i.first] = new std::thread(std::ref(*i.second));
+				d_threads[i.first] = new std::thread([i]{ i.second->operator()(); });	// Workaround bug in VS11Beta.
 			}
 			else
 			{
@@ -151,7 +151,7 @@ public:
 	//! To avoid packet build-up in pipes, pure producing node are paused first, transforming nodes second and pure consuming nodes last.
 	virtual void pause()
 	{
-		auto pause_f = [this](std::pair<const nodes_t::key_type, nodes_t::mapped_type>& i)
+		auto pause_f = [this](nodes_t::value_type& i)
 		{
 			i.second->pause();
 		};
@@ -168,7 +168,7 @@ public:
 	//!\param join If true, threads are joined before they are destroyed.
 	virtual void stop(bool join = true)
 	{
-		auto stop_f = [this, join](std::pair<const nodes_t::key_type, nodes_t::mapped_type>& i)
+		auto stop_f = [this, join](nodes_t::value_type& i)
 		{
 			i.second->stop();
 
@@ -236,7 +236,7 @@ private:
 #endif
 
 /*
-	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
+	(C) Copyright Thierry Seegers 2010-2012. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
 

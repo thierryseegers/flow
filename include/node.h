@@ -259,13 +259,11 @@ protected:
 
 public:
 	//!\param name_r The name to give this node.
-	node(const std::string& name_r) : named(name_r)
-	{
-		*d_state_m.access() = paused;
-	}
+	node(const std::string& name_r) : named(name_r), d_state_m(paused)
+	{}
 
 	//!\brief Move constructor.
-	node(node&& node_rr) : named(node_rr), d_state_m(std::move(node_rr.d_state_m))
+	node(node&& node_rr) : named(std::move(node_rr)), d_state_m(std::move(node_rr.d_state_m))
 	{}
 	
 	virtual ~node() {}
@@ -494,7 +492,7 @@ public:
 #endif
 
 /*
-	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
+	(C) Copyright Thierry Seegers 2010-2012. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
 

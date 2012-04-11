@@ -3,10 +3,10 @@
 #include "samples/math.h"
 #include "samples/generic.h"
 
-#include <boost/thread.hpp>
-
+#include <chrono>
 #include <iostream>
 #include <string>
+#include <thread>
 
 using namespace std;
 
@@ -28,7 +28,7 @@ string world()
 int main()
 {
 	// Create a timer that will fire every three seconds.
-	flow::monotonous_timer mt(boost::posix_time::seconds(3));
+	flow::monotonous_timer mt(chrono::seconds(3));
 
 	// Instantiate a graph. It starts out empty.
 	flow::graph g;
@@ -37,7 +37,7 @@ int main()
 	g.add(make_shared<flow::samples::generic::generator<string>>(mt, hello, "g1"));
 	g.add(make_shared<flow::samples::generic::generator<string>>(mt, space, "g2"));
 	g.add(make_shared<flow::samples::generic::generator<string>>(mt, world, "g3"));
-	
+
 	// Include an adder with three inputs.
 	g.add(make_shared<flow::samples::math::adder<string>>(3, "a1"));
 
@@ -53,7 +53,7 @@ int main()
 	g.connect("a1", 0, "o1", 0);
 
 	// Start the timer on its own thread so it doesn't block us here.
-	boost::thread mt_t(boost::ref(mt));
+	thread mt_t(ref(mt));
 
 	// Start the graph! Now we should see "Hello, world!" printed to the standard output every three seconds.
 	g.start();

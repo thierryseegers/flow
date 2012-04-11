@@ -12,6 +12,8 @@
   *
   */
 
+#include <utility>
+
 #include <lwsync/resource_accessors.hpp>
 #include <lwsync/synchronization_policy.hpp>
 
@@ -57,7 +59,7 @@ namespace lwsync
 	  /** @brief Initialize resource object with its move constructor.
         */
 	  critical_resource(resource_type&& resource_ref)
-         : _resource(move(resource_ref))
+         : _resource(std::move(resource_ref))
          , _guard()
       {}
 

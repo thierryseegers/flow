@@ -50,7 +50,7 @@ public:
 	{}
 
 	//!\brief Move constructor.
-	pipe(pipe&& pipe_rr) : named(pipe_rr), d_packets(std::move(pipe_rr.d_packets)), d_input_p(std::move(pipe_rr.d_input_p)), d_output_p(std::move(pipe_rr.d_output_p)),
+	pipe(pipe&& pipe_rr) : named(std::move(pipe_rr)), d_packets(std::move(pipe_rr.d_packets)), d_input_p(std::move(pipe_rr.d_input_p)), d_output_p(std::move(pipe_rr.d_output_p)),
 		d_max_length(std::move(pipe_rr.d_max_length)), d_max_weight(std::move(pipe_rr.d_max_weight)), d_weight(std::move(pipe_rr.d_weight))
 	{}
 
@@ -160,7 +160,7 @@ public:
 #endif
 
 /*
-	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
+	(C) Copyright Thierry Seegers 2010-2012. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
 

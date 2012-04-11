@@ -12,6 +12,8 @@
   *
   */
 
+#include <utility>
+
 #include <lwsync/critical_resource.hpp>
 
 namespace lwsync
@@ -72,7 +74,7 @@ namespace lwsync
       {}
 
 	  monitor(resource_type&& resource_ref)
-         : inherited(move(resource_ref))
+         : inherited(std::move(resource_ref))
       {}
 
       monitor(const monitor& the_same)

@@ -1,11 +1,11 @@
 #if !defined(FLOW_TIMER_H)
 	 #define FLOW_TIMER_H
 
-#include <boost/date_time.hpp>
-#include <boost/thread.hpp>
 #include <lwsync/critical_resource.hpp>
 
+#include <chrono>
 #include <functional>
+#include <thread>
 #include <vector>
 
 //!\file timer.h
@@ -63,11 +63,12 @@ public:
 //!\brief Concrete timer that notifies listeners repeatedly at a set interval of time.
 class monotonous_timer : public timer
 {
-	boost::posix_time::time_duration d_interval;
+	std::chrono::milliseconds d_interval;
 
 public:
-	//!\param interval The time to wait between notifications.
-	monotonous_timer(const boost::posix_time::time_duration& interval) : d_interval(interval) {}
+	//!\param interval The time to wait between notifications. Must be a duration typedef from <chrono>.
+	template<typename Duration>
+	monotonous_timer(const Duration& interval) : d_interval(std::chrono::duration_cast<std::chrono::milliseconds>(interval)) {}
 
 	virtual ~monotonous_timer() {}
 
@@ -81,8 +82,8 @@ public:
 				std::for_each(listeners_a->begin(), listeners_a->end(), std::mem_fun_ref(&std::function<void ()>::operator()));
 			}
 			
-			//TODO: wait until time has expired OR timer is stopped.
-			boost::thread::sleep(boost::get_system_time() + d_interval);
+			// TODO: wait until time has expired OR timer is stopped.
+			std::this_thread::sleep_for(d_interval);
 		}
 	}
 };
@@ -92,7 +93,7 @@ public:
 #endif
 
 /*
-	(C) Copyright Thierry Seegers 2010-2011. Distributed under the following license:
+	(C) Copyright Thierry Seegers 2010-2012. Distributed under the following license:
 
 	Boost Software License - Version 1.0 - August 17th, 2003
 

@@ -12,7 +12,11 @@
   *
   */
 
-#if !defined(LWSYNC_HAS_NO_BOOST)
+#if defined(LWSYNC_HAS_CPP11)
+
+	#include <lwsync/detail/std_thread_facilities.hpp>
+
+#elif !defined(LWSYNC_HAS_NO_BOOST)
 
    #include <lwsync/detail/boost_thread_facilities.hpp>
 
