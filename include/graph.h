@@ -4,6 +4,7 @@
 #include "named.h"
 #include "node.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
