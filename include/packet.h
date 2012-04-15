@@ -20,6 +20,7 @@ namespace flow
 class packet
 {
 public:
+	//!\brief Convenience typedef for time_point type used.
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point_type;
 
 private:

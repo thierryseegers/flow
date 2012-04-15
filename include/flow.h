@@ -56,22 +56,22 @@
 
 \section introduction Introduction
 
-flow is a headers-only <a href="http://en.wikipedia.org/wiki/C%2B%2B0x">C++0x</a> 
+flow is a headers-only <a href="http://en.wikipedia.org/wiki/C%2B%2B0x">C++11</a> 
 framework which provides the building blocks for streaming data packets through a graph 
 of data-transforming nodes. 
 Note that this library has nothing to do with computer networking. 
-In the context of this framework, a data packet is essentially a slice of a data stream.
+In the context of this framework, a data packet is a slice of a data stream.
 
 A \ref flow::graph will typically be composed of \ref flow::producer "producer nodes", \ref flow::transformer "transformer nodes" and 
 \ref flow::consumer "consumer nodes".
-Nodes are connected to one another by \ref flow::pipe "pipes" attached to their input and output \ref flow::pin "pins".
+Nodes are connected to one another by \ref flow::pipe "pipes" attached to their \ref flow::inpin "input pins" and \ref flow::outpin "output pins".
 As a library user, you are expected to write concrete node classes that perform the tasks you require.
 The graph and base node classes already provide the necessary API to build and run a graph.
 
-Here's an example of a simple graph. 
-The two producers nodes could be capturing data from some hardware or be generating a steady stream of data on their own. 
-The transformer node processes the data coming in from both producers. 
-The transformer's output data finally goes to a consumer node. 
+Here's an example of a simple graph.
+The two producers nodes could be capturing data from some hardware or be generating a steady stream of data on their own.
+The transformer node processes the data coming in from both producers.
+The transformer's output data finally goes to a consumer node.
 
 \image html ./introduction_graph_simple.png "Data flow for a simple graph"
 
@@ -86,33 +86,33 @@ The \ref flow::samples::generic::tee "tee" transformer node is a \ref samples "s
 This implementation:
  - uses templates heavily.
  - requires RTTI.
- - depends on the following C++11's features:
-	- auto keyword
-	- lambda expression
-	- r-value reference
-	- move constructor and move function
-	- unique_ptr and shared_ptr
- - depends on thirdparty libraries, see \ref thirdparty.
- - has been tested with Visual Studio 11 Beta.
-
-It is not required to use the included Visual Studio solution since this library is composed of headers only.
-The solution's only purpose is to run the example code.
-The solution expects the following user macros to be set 
-(best set through <a href="http://blog.gockelhut.com/2009/11/visual-studio-2010-property-sheets-and.html">property sheets</a>):
- - ThirdpartyIncludeDir: the directory where thirdparty libraries' headers are located.
- - ThirdpartyLibDir: the directory where thirdparty libraries' binaries are located.
+ - depends on the following C++11's language features:
+  - auto keyword
+  - lambda expression
+  - r-value reference
+  - move constructor and move function
+ - depends on the following C++11 headers:
+  - \c \<chrono\>
+  - \c \<function\>
+  - \c \<memory\>
+  - \c \<thread\>
+  - \c \<utility\>
+ - depends on a thirdparty library, included in the source package. See \ref thirdparty.
+ - has been tested with Visual Studio 11 Beta and GCC 4.6.3.
+ - uses <a href="http://www.cmake.org">CMake</a> to build examples.
+ - uses <a href="http://www.stack.nl/~dimitri/doxygen/index.html">Doxygen</a> to generate its documentation (and, optionally, <a href="http://www.graphviz.org/">Graphviz's dot</a>.
 
 \section thirdparty Use of thirdparty libraries
 
- - <a href="http://www.boost.org/">boost</a>: the file graph.h uses the boost library's threading facilities. 
-	The files packet.h and timer.h use boost's date_time library.
  - <a href="http://www.codeproject.com/KB/threads/lwsync.aspx">lwsync</a>: node.h 
 	uses lwsync::critical_resource<T> and lwsync::monitor<T> to perform  resource 
-	synchronization. This headers-only library internally uses boost::thread by default. The 
-	included lwsync has been modified to add a 
-	<a href="http://www2.research.att.com/~bs/C++0xFAQ.html#rval">move constructor</a> to 
-	lwsync::critical_resource<T>.
-
+	synchronization.
+	This headers-only library is already included in the source package.
+	You do not need to install it.
+	lwsync has been modified to:
+	  - work with C++11's mutex and condition_variable.
+	  - add a <a href="http://www2.research.att.com/~bs/C++0xFAQ.html#rval">move constructor</a> to lwsync::critical_resource<T>.
+	
 \section principles Design principles
 
 \subsection use_unique_ptr Use of std::unique_ptr
@@ -128,9 +128,9 @@ The lifetime of these threads is already taken care by \ref flow::graph "graph".
 As a library user, the only mutli-threaded code you would write is whatever would go beyond graph management.
 
 The thread is started by \ref flow::graph "graph" by passing a reference to the node object to boost::thread. 
-Since the application passes a shared_ptr to a node to the graph, 
-it is possible for the application to modify the node's state while it is running.
-It must do so in a thread-safe manner.
+Since the application passes a shared_ptr to a node to the graph, it is possible for the application to modify the node's state while it is running.
+If the application does so, it must therefore do it in a thread-safe manner.
+This implies that the concrete node classes you design would need support for concurrent access.
 
 \subsection consumption_time Consumption time
 
@@ -148,11 +148,11 @@ The \ref flow::node "node" base class derives from \ref flow::named named.
 That makes all node concrete classes required to be given a name too.
 This feature serves two purposes:
  - nodes can be refered to by their names when building a graph, improving code readability greatly.
- - helps debugging, especially since all pins and pipes are also named and have names derived from what they are connected to.
+ - helps debugging, especially since all pins and pipes are also named and have names automatically generated based on what they are connected to.
 
 \section improvements Future improvements
 
- - I'll think of something. I'm sure.
+See the \ref todo "Todo list".
 
 \section samples Samples concrete nodes
 
@@ -166,6 +166,7 @@ They are found in the \ref flow::samples::generic and \ref flow::samples::math n
 
 \section thanks Thanks
 
+ - Volodymyr Frolov, author of the lwsync library used in this project.
  - Dušan Rodina, maker of <a href="http://www.softwareideas.net/en/Default.aspx">Software Ideas Modeler</a>.
    Modeler was used to create the graph diagrams in the \ref introduction.
 
