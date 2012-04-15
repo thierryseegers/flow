@@ -134,7 +134,7 @@ public:
 			if(d_threads.find(i.first) == d_threads.end())
 			{
 //				d_threads[i.first] = new std::thread(std::ref(*i.second));
-				d_threads[i.first] = new std::thread([i]{ i.second->operator()(); });	// Workaround bug in VS11Beta.
+				d_threads[i.first] = new std::thread([i]{ i.second->operator()(); });	//!\todo Remove this workaround for bug in VS 11 Beta when possible.
 			}
 			else
 			{
