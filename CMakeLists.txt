@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 
 project(flow)
 
-set(FLOW_VERSION_MAJOR 1 CACHE STRING "major version number")
-set(FLOW_VERSION_MINOR 1 CACHE STRING "minor version number")
+set(FLOW_VERSION_MAJOR 2)
+set(FLOW_VERSION_MINOR 0)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
