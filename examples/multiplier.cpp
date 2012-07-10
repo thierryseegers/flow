@@ -92,20 +92,22 @@ int main()
 	uniform_int_distribution<size_t> uniform(0, 10);
 	auto generator = bind(uniform, ref(engine));
 
-	// Create two generators.
+	// Create three generators.
 	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g1"));
 	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g2"));
+	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g3"));
 	
-	// Include a multiplication_expressifier with two inputs.
+	// Include a multiplication_expressifier with three inputs.
 	// We specify its inputs to be ints, but its output will always be a string.
-	g.add(make_shared<multiplication_expressifier<int>>(2, "me1"));
+	g.add(make_shared<multiplication_expressifier<int>>(3, "me1"));
 
 	// Include a consumer that just prints the data packets to cout.
 	g.add(make_shared<flow::samples::generic::ostreamer<string>>(cout, "o1"));
 
-	// Connect the two generators to the multiplication_expressifier.
+	// Connect the three generators to the multiplication_expressifier.
 	g.connect("g1", 0, "me1", 0);
 	g.connect("g2", 0, "me1", 1);
+	g.connect("g3", 0, "me1", 2);
 
 	// Connect the multiplication_expressifier to the ostreamer.
 	g.connect("me1", 0, "o1", 0);
