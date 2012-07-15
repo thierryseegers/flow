@@ -14,10 +14,10 @@ using namespace std;
 // This class takes its inputs (in terms of T), multiplies them, then outputs the multiplication expression including the product as a string.
 // For example, given the inputs of 3 and 4, it outputs the string "3 * 4 = 12".
 template<typename T>
-class multiplication_expressifier : public flow::transformer
+class multiplication_expressifier : public flow::transformer<T, string>
 {
 public:
-	multiplication_expressifier(size_t ins = 2, const string& name_r = "multiplication_expressifier") : node(name_r), transformer(name_r, ins, 1) {}
+	multiplication_expressifier(size_t ins = 2, const string& name_r = "multiplication_expressifier") : flow::node(name_r), flow::transformer<T, string>(name_r, ins, 1) {}
 
 	virtual ~multiplication_expressifier() {}
 
@@ -27,9 +27,9 @@ public:
 		bool all = true;
 
 		// Confirm.
-		for(size_t i = 0; i != ins() && all; ++i)
+		for(size_t i = 0; i != flow::consumer<T>::ins() && all; ++i)
 		{
-			if(!input(i).peek())
+			if(!flow::consumer<T>::input(i).peek())
 			{
 				all = false;
 			}
@@ -39,41 +39,36 @@ public:
 		if(all)
 		{
 			// Gather the terms in a container.
-			vector<unique_ptr<flow::packet>> terms;
+			vector<unique_ptr<flow::packet<T>>> terms;
 
-			for(size_t i = 0; i != ins(); ++i)
+			for(size_t i = 0; i != flow::consumer<T>::ins(); ++i)
 			{
-				terms.emplace_back(move(input(i).pop()));
+				terms.emplace_back(move(flow::consumer<T>::input(i).pop()));
 			}
 
 			// Start the product as equal to the first term.
-			T product(*reinterpret_cast<T*>(&terms[0]->data()[0]));
+			T product(terms[0]->data());
 
 			// Multiply by the value of all other packets.
-			for_each(terms.begin() + 1, terms.end(), [&product](const unique_ptr<flow::packet>& packet_up_r){
-				product *= *reinterpret_cast<T*>(&packet_up_r->data()[0]);
+			for_each(terms.begin() + 1, terms.end(), [&product](const unique_ptr<flow::packet<T>>& packet_up_r){
+				product *= packet_up_r->data();
 			});
 
 			// Using a stringstream, aggregate all the factors and the product to form the multiplication expression.
 			stringstream ss;
-			ss << *reinterpret_cast<T*>(&(terms[0]->data()[0]));
-			for_each(terms.begin() + 1, terms.end(), [&ss](const unique_ptr<flow::packet>& packet_up_r){
-				ss << " * " << *reinterpret_cast<T*>(&packet_up_r->data()[0]);
+			ss << terms[0]->data();
+			for_each(terms.begin() + 1, terms.end(), [&ss](const unique_ptr<flow::packet<T>>& packet_up_r){
+				ss << " * " << packet_up_r->data();
 			});
 			ss << " = " << product;
 
-			// This now looks like "a * b [* x] = p".
-			string expression = ss.str();
+			// ss now looks like "a * b [* x] = p".
 
 			// Make a packet with the expression.
-			vector<unsigned char> data(sizeof(string));
-			new(&data[0]) string;
-			*reinterpret_cast<string*>(&data[0]) = expression;
-
-			unique_ptr<flow::packet> p(new flow::packet(move(data)));
+			unique_ptr<flow::packet<string>> p(new flow::packet<string>(ss.str()));
 
 			// Output it.
-			output(0).push(move(p));
+			flow::producer<string>::output(0).push(move(p));
 		}
 	}
 };

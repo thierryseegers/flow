@@ -36,20 +36,20 @@ public:
 	virtual ~graph()
 	{}
 
-	//!\brief Adds a node to the graph.
+	//!\brief Adds a consumer node to the graph.
 	//!
 	//! The node will be disconnected.
 	virtual void add(std::shared_ptr<node> node_p)
 	{
-		if(dynamic_cast<transformer*>(node_p.get()))
+		if(std::dynamic_pointer_cast<detail::transformer>(node_p))
 		{
 			d_transformers[node_p->name()] = node_p;
 		}
-		else if(dynamic_cast<producer*>(node_p.get()))
+		else if(std::dynamic_pointer_cast<detail::producer>(node_p))
 		{
 			d_producers[node_p->name()] = node_p;
 		}
-		else if(dynamic_cast<consumer*>(node_p.get()))
+		else if(std::dynamic_pointer_cast<detail::consumer>(node_p))
 		{
 			d_consumers[node_p->name()] = node_p;
 		}
@@ -67,26 +67,7 @@ public:
 
 		if(nodes_p)
 		{
-			// Disconnect all inpins.
-			consumer *c_p = dynamic_cast<consumer*>(i->second.get());
-			if(c_p)
-			{
-				for(size_t i = 0; i != c_p->ins(); ++i)
-				{
-					c_p->input(i).disconnect();
-				}
-			}
-
-			// Disconnect all outpins.
-			producer *p_p = dynamic_cast<producer*>(i->second.get());
-			if(p_p)
-			{
-				for(size_t i = 0; i != p_p->outs(); ++i)
-				{
-					p_p->output(i).disconnect();
-				}
-			}
-
+			i->second->sever();
 			p = i->second;
 			nodes_p->erase(i);
 		}
@@ -94,7 +75,7 @@ public:
 		return p;
 	}
 
-	//!\brief Conect two nodes from the graph together.
+	//!\brief Connect two nodes from the graph together.
 	//!
 	//!\param p_name_r The name of the producing node.
 	//!\param p_pin The index of the producing node's output pin to connect.
@@ -117,7 +98,7 @@ public:
 			return false;
 		}
 
-		dynamic_cast<producer*>(p_node_i->second.get())->output(p_pin).connect(dynamic_cast<consumer*>(c_node_i->second.get())->input(c_pin));
+		std::dynamic_pointer_cast<detail::producer>(p_node_i->second)->connect(p_pin, c_node_i->second.get(), c_pin);
 
 		return true;
 	}
