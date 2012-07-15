@@ -23,14 +23,9 @@
 //!\brief All basic blocks to build a graph of packets streaming across nodes.
 namespace flow
 {
-	
-template<typename T>
-class inpin;
 
 template<typename T>
 class outpin;
-
-class node;
 
 //!\enum flow::state
 //!
@@ -57,14 +52,9 @@ class pin : public named
 protected:
 	std::shared_ptr<lwsync::critical_resource<pipe<T>>> d_pipe_cr_sp; //!< Shared ownership of a pipe with the pin to which this pin is connected.
 
-public:
-	//!\brief The flow direction of this pin.
-	enum dir
-	{
-		in,		//!< Flows into the node.
-		out		//!< Flows out of the node.
-	};
+	friend class outpin<T>;
 
+public:
 	//!\param name_r The name of this pin. This will be typically generated from the name of the owning node.
 	pin(const std::string& name_r) : named(name_r) {}
 
@@ -74,53 +64,6 @@ public:
 	pin(const pin<T>& pin_r) : named(pin_r) {}
 
 	virtual ~pin() {}
-
-	//!\brief The direction of this pin.
-	virtual dir direction() const = 0;
-
-	//!\brief Connect this pin to another pin with a pipe.
-	//!
-	//! The connection must be between pins of opposing direction.
-	//! It is assumed that this call is made through either inpin::connect or outpin::connect, thus that this pin is an inpin and that other is an outpin.
-	//! If the output pin is already connected to a pipe, it will be disconnected.
-	//! If the input pin is already connected to a pipe, it will be reused.
-	//!
-	//!\param other The pin to which to connect this pin.
-	//!\param max_length The maximum length to give the pipe.
-	//!\param max_weight The maximum weight to give the pipe.
-	virtual void connect(pin<T>* other, const size_t max_length = 0, const size_t max_weight = 0)
-	{
-		assert(other);
-		assert(direction() == in);
-		assert(other->direction() == out);
-
-		// Disconnect the input of the other's pipe.
-		if(other->d_pipe_cr_sp)
-		{
-			auto other_pipe_a = other->d_pipe_cr_sp->access();
-			if(other_pipe_a->input()){
-				reinterpret_cast<pin<T>*>(other_pipe_a->input())->disconnect();
-			}
-		}
-
-		if(d_pipe_cr_sp)
-		{
-			// This inpin already has a pipe, connect the outpin to it.
-			auto this_pipe_a = d_pipe_cr_sp->access();
-		
-			other->d_pipe_cr_sp = d_pipe_cr_sp;
-			this_pipe_a->rename(other->name() + "_to_" + name());
-
-			if(max_length) this_pipe_a->cap_length(max_length);
-			if(max_weight) this_pipe_a->cap_length(max_weight);
-		}
-		else
-		{
-			// This inpin has no pipe, make a new one.
-			pipe<T> p(other->name() + "_to_" + name(), reinterpret_cast<outpin<T>*>(other), reinterpret_cast<inpin<T>*>(this), max_length, max_weight);
-			other->d_pipe_cr_sp = d_pipe_cr_sp = std::make_shared<lwsync::critical_resource<pipe<T>>>(std::move(p)); 
-		}
-	}
 
 	//!\brief Disconnects this pin from its pipe.
 	virtual void disconnect()
@@ -154,22 +97,6 @@ public:
 	inpin(const inpin<T>& inpin_r) : pin<T>(inpin_r), d_state_m_r(inpin_r.d_state_m_r) {}
 
 	virtual ~inpin() {}
-
-	//!\brief The direction of this pin.
-	//!
-	//!\return pin::in.
-	virtual typename pin<T>::dir direction() const { return pin<T>::in; }
-
-	//!\brief Connects this pin to an output pin.
-	//!
-	//!\param outpin_r The output pin this pin will be connected to.
-	//!\param max_length The maximum length to give the pipe.
-	//!\param max_weight The maximum weight to give the pipe.
-	virtual void connect(outpin<T>& outpin_r, const size_t max_length = 0, const size_t max_weight = 0)
-	{
-		// We must use "dumb" casting here because outpin has not yet been defined as deriving from pin.
-		return this->pin<T>::connect(reinterpret_cast<pin<T>*>(&outpin_r), max_length, max_weight);
-	}
 
 	//!\brief Check whether a packet is in the pipe.
 	//!
@@ -225,19 +152,45 @@ public:
 
 	virtual ~outpin() {}
 
-	//!\brief The direction of this pin.
+	//!\brief Connect this outpin to an inpin with a pipe.
 	//!
-	//!\return pin::out.
-	virtual typename pin<T>::dir direction() const { return pin<T>::out; }
-
-	//!\brief Connects this pin to an input pin.
+	//! If this output pin is already connected to a pipe, it will be disconnected.
+	//! If the input pin is already connected to a pipe, it will be reused.
 	//!
-	//!\param inpin_r The input pin this pin will be connected to.
+	//!\param inpin_r The inpin to which to connect this outpin.
 	//!\param max_length The maximum length to give the pipe.
 	//!\param max_weight The maximum weight to give the pipe.
 	virtual void connect(inpin<T>& inpin_r, const size_t max_length = 0, const size_t max_weight = 0)
 	{
-		return inpin_r.connect(*this, max_length, max_weight);
+		// Disconnect this outpin from it's pipe, if it has one.
+		if(d_pipe_cr_sp)
+		{
+			pin<T>::disconnect();
+		}
+
+		if(inpin_r.pin<T>::d_pipe_cr_sp)
+		{
+			// The inpin already has a pipe, connect this outpin to it.
+			auto inpin_pipe_a = inpin_r.pin<T>::d_pipe_cr_sp->access();
+		
+			//... but first, diconnects it from it's other output pin.
+			if(inpin_pipe_a->input()){
+				inpin_pipe_a->input()->disconnect();
+			}
+
+			d_pipe_cr_sp = inpin_r.pin<T>::d_pipe_cr_sp;
+			inpin_pipe_a->rename(pin<T>::name() + "_to_" + inpin_r.pin<T>::name());
+
+			// Overwrite the pipe's parameters with new ones.
+			inpin_pipe_a->cap_length(max_length);
+			inpin_pipe_a->cap_length(max_weight);
+		}
+		else
+		{
+			// The inpin has no pipe, make a new one.
+			pipe<T> p(pin<T>::name() + "_to_" + inpin_r.pin<T>::name(), this, &inpin_r, max_length, max_weight);
+			d_pipe_cr_sp = inpin_r.pin<T>::d_pipe_cr_sp = std::make_shared<lwsync::critical_resource<pipe<T>>>(std::move(p)); 
+		}
 	}
 
 	//!\brief Moves a packet to the pipe.
