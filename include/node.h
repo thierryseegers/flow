@@ -277,7 +277,7 @@ public:
 namespace detail
 {
 
-class consumer;
+// These base classes help flow::graph distinguish between types of nodes without having to know their template types.
 
 class producer
 {
@@ -382,6 +382,11 @@ public:
 		}
 	}
 
+	//!\brief Connect this producer to a consumer.
+	//!
+	//!\param p_pin The index of this node's output pin.
+	//!\param consumer_p Pointer to the consumer node to conenct to.
+	//!\param c_pin The index of the consumer node's input pin.
 	virtual void connect(size_t p_pin, node* consumer_p, size_t c_pin)
 	{
 		output(p_pin).connect(dynamic_cast<consumer<T>*>(consumer_p)->input(c_pin));
