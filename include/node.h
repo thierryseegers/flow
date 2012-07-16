@@ -24,8 +24,15 @@
 namespace flow
 {
 
+// Forward declarations.
+
 template<typename T>
 class outpin;
+
+template<typename T>
+class producer;
+
+class graph;
 
 //!\enum flow::state
 //!
@@ -141,17 +148,6 @@ class outpin : public pin<T>
 {
 	using pin<T>::d_pipe_cr_sp;
 
-public:
-	//!\param name_r The name to give this outpin.
-	outpin(const std::string& name_r) : pin<T>(name_r) {}
-
-	//!\brief Copy constructor.
-	//!
-	//!\param outpin_r The inpin to copy from.
-	outpin(const outpin<T>& outpin_r) : pin<T>(outpin_r) {}
-
-	virtual ~outpin() {}
-
 	//!\brief Connect this outpin to an inpin with a pipe.
 	//!
 	//! If this output pin is already connected to a pipe, it will be disconnected.
@@ -192,6 +188,19 @@ public:
 			d_pipe_cr_sp = inpin_r.pin<T>::d_pipe_cr_sp = std::make_shared<lwsync::critical_resource<pipe<T>>>(std::move(p)); 
 		}
 	}
+
+	friend class producer<T>;
+
+public:
+	//!\param name_r The name to give this outpin.
+	outpin(const std::string& name_r) : pin<T>(name_r) {}
+
+	//!\brief Copy constructor.
+	//!
+	//!\param outpin_r The inpin to copy from.
+	outpin(const outpin<T>& outpin_r) : pin<T>(outpin_r) {}
+
+	virtual ~outpin() {}
 
 	//!\brief Moves a packet to the pipe.
 	//!
@@ -313,6 +322,18 @@ class producer : public virtual node, public detail::producer
 {
 	std::vector<outpin<T>> d_outputs;
 
+	//!\brief Connect this producer to a consumer.
+	//!
+	//!\param p_pin The index of this node's output pin.
+	//!\param consumer_p Pointer to the consumer node to conenct to.
+	//!\param c_pin The index of the consumer node's input pin.
+	virtual void connect(size_t p_pin, node* consumer_p, size_t c_pin)
+	{
+		output(p_pin).connect(dynamic_cast<consumer<T>*>(consumer_p)->input(c_pin));
+	}
+
+	friend class graph;
+
 public:
 	//!\param name_r The name to give this node.
 	//!\param outs Numbers of output pins.
@@ -380,16 +401,6 @@ public:
 				produce();
 			}
 		}
-	}
-
-	//!\brief Connect this producer to a consumer.
-	//!
-	//!\param p_pin The index of this node's output pin.
-	//!\param consumer_p Pointer to the consumer node to conenct to.
-	//!\param c_pin The index of the consumer node's input pin.
-	virtual void connect(size_t p_pin, node* consumer_p, size_t c_pin)
-	{
-		output(p_pin).connect(dynamic_cast<consumer<T>*>(consumer_p)->input(c_pin));
 	}
 
 	//!\brief Producing function.
