@@ -7,8 +7,11 @@ set(FLOW_VERSION_MINOR 0)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_subdirectory(examples)
+enable_testing()
+
 add_subdirectory(documentation)
+add_subdirectory(examples)
+add_subdirectory(tests)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION .)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/documentation/htdocs DESTINATION documentation)
