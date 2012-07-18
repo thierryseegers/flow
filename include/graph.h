@@ -61,15 +61,14 @@ public:
 	virtual std::shared_ptr<node> remove(const std::string& name_r)
 	{
 		std::shared_ptr<node> p;
+		nodes_t *n;
+		nodes_t::iterator i;
 
-		nodes_t *nodes_p;
-		auto i = find(name_r, nodes_p);
-
-		if(nodes_p)
+		if(n = find(name_r, i))
 		{
 			i->second->sever();
 			p = i->second;
-			nodes_p->erase(i);
+			n->erase(i);
 		}
 
 		return p;
@@ -84,21 +83,14 @@ public:
 	template<typename T>
 	bool connect(std::shared_ptr<flow::producer<T>> sp_producer_r, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_consumer_r, const size_t c_pin)
 	{
-		nodes_t *nodes_p;
-		auto p_node_i = find(sp_producer_r->name(), nodes_p);
+		nodes_t::iterator i;
 		
-		if(!nodes_p)
+		// Confirm these two nodes are in the graph.
+		if(!find(sp_producer_r->name(), i) || !find(sp_consumer_r->name(), i))
 		{
 			return false;
 		}
 		
-		auto c_node_i = find(sp_consumer_r->name(), nodes_p);
-
-		if(!nodes_p)
-		{
-			return false;
-		}
-
 		sp_producer_r->connect(p_pin, sp_consumer_r.get(), c_pin);
 
 		return true;
@@ -173,26 +165,24 @@ public:
 	}
 
 private:
-	virtual nodes_t::iterator find(const std::string& name_r, nodes_t*& nodes_pr)
+	virtual nodes_t* find(const std::string& name_r, nodes_t::iterator& i)
 	{
-		nodes_pr = 0;
-
-		auto i = d_producers.find(name_r);
+		i = d_producers.find(name_r);
 
 		if(i != d_producers.end())
 		{
-			nodes_pr = &d_producers;
+			return &d_producers;
 		}
 		else if((i = d_transformers.find(name_r)) != d_transformers.end())
 		{
-			nodes_pr = &d_transformers;
+			return &d_transformers;
 		}
 		else if((i = d_consumers.find(name_r)) != d_consumers.end())
 		{
-			nodes_pr = &d_consumers;
+			return &d_consumers;
 		}
 
-		return i;
+		return nullptr;
 	}
 };
 

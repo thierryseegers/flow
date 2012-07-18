@@ -36,6 +36,7 @@ int main()
 	auto sp_g1 = make_shared<flow::samples::generic::generator<string>>(mt, hello, "g1");
 	auto sp_g2 = make_shared<flow::samples::generic::generator<string>>(mt, space, "g2");
 	auto sp_g3 = make_shared<flow::samples::generic::generator<string>>(mt, world, "g3");
+	g.add(sp_g1);
 	g.add(sp_g2);
 	g.add(sp_g3);
 
