@@ -11,7 +11,7 @@
 
 using namespace std;
 
-// This class takes its inputs (in terms of T), multiplies them, then outputs the multiplication expression including the product as a string.
+// This class takes its inputs (in terms of T), multiplies them using *=, then outputs the multiplication expression including the product as a string.
 // For example, given the inputs of 3 and 4, it outputs the string "3 * 4 = 12".
 template<typename T>
 class multiplication_expressifier : public flow::transformer<T, string>

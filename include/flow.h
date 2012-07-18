@@ -98,7 +98,7 @@ This implementation:
   - \c \<thread\>
   - \c \<utility\>
  - depends on a thirdparty library, included in the source package. See \ref thirdparty.
- - has been tested with Visual Studio 11 Beta and GCC 4.6.3.
+ - has been tested with Visual Studio 2012 RC and GCC 4.7.0.
  - uses <a href="http://www.cmake.org">CMake</a> to build examples.
  - uses <a href="http://www.stack.nl/~dimitri/doxygen/index.html">Doxygen</a> to generate its documentation (and, optionally, <a href="http://www.graphviz.org/">Graphviz's dot</a>).
 
@@ -223,14 +223,14 @@ This node simply streams the data packets it receives to a std::ostream of our c
 
 \page multiplier Multiplication expression
 
-In this example, we set up a graph with two \ref flow::samples::generic::generator "generators". 
+In this example, we set up a graph with three \ref flow::samples::generic::generator "generators". 
 Each of these generators operate on the same \ref flow::monotonous_timer "timer". 
 Every time the timer fires, the generators produce a packet of data.
 The data they produce is dictated by the functors given to them at construction time.
 In this case, the functors are a reference to a random number generator.
 
 The produced packets are then fed to a transformer defined locally.
-This transformer takes its inputs (in terms of T), multiplies them, then outputs the multiplication expression including the product as a string.
+This transformer takes its inputs (in terms of T), multiplies them using <tt>*=</tt>, then outputs the multiplication expression including the product as a string.
 For example, given the inputs of 3 and 4, it outputs the string "3 * 4 = 12".
 
 Finally, the transformer's output is connected to an \ref flow::samples::generic::ostreamer "ostreamer". 
@@ -241,13 +241,15 @@ This node simply streams the data packets it receives to a std::ostream of our c
 Here's the output of a run of about 30 seconds:
 
 \code
-6 * 2 = 12
-5 * 8 = 40
-1 * 7 = 7
-3 * 8 = 24
-10 * 5 = 50
-1 * 0 = 0
-4 * 8 = 32
-2 * 9 = 18
+4 * 4 * 0 = 0
+10 * 3 * 9 = 270
+9 * 5 * 8 = 360
+2 * 7 * 0 = 0
+8 * 7 * 10 = 560
+1 * 5 * 5 = 25
+8 * 0 * 10 = 0
+6 * 3 * 2 = 36
+1 * 7 * 3 = 21
+3 * 10 * 0 = 0
 \endcode
 */
