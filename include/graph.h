@@ -25,7 +25,7 @@ class graph : public named
 	typedef std::map<std::string, std::shared_ptr<node> > nodes_t;
 	nodes_t d_producers, d_transformers, d_consumers;
 
-	typedef std::map<std::string, std::thread*> threads_t;
+	typedef std::map<std::string, std::unique_ptr<std::thread>> threads_t;
 	threads_t d_threads;
 
 public:
@@ -34,7 +34,9 @@ public:
 	{}
 
 	virtual ~graph()
-	{}
+	{
+		stop();
+	}
 
 	//!\brief Adds a node to the graph.
 	//!
@@ -133,8 +135,8 @@ public:
 		{
 			if(d_threads.find(i.first) == d_threads.end())
 			{
-//				d_threads[i.first] = new std::thread(std::ref(*i.second));
-				d_threads[i.first] = new std::thread([i]{ i.second->operator()(); });	//!\todo Remove this workaround for bug in VS 11 Beta when possible.
+//				d_threads[i.first] = std::unique_ptr<std::thread>(new std::thread(std::ref(*i.second)));
+				d_threads[i.first] = std::unique_ptr<std::thread>(new std::thread([i]{ i.second->operator()(); }));	//!\todo Remove this workaround for bug in VC++11 (bug #734305) when possible.
 			}
 			else
 			{
@@ -176,11 +178,7 @@ public:
 			graph::threads_t::iterator j = d_threads.find(i.first);
 			if(j != d_threads.end())
 			{
-				if(join)
-				{
-					j->second->join();
-				}
-				delete j->second;
+				join ? j->second->join() : j->second->detach();
 				d_threads.erase(j);
 			}
 		};
