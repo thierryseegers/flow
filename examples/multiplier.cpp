@@ -11,13 +11,13 @@
 
 using namespace std;
 
-// This class takes its inputs (in terms of T), multiplies them, then outputs the multiplication expression including the product as a string.
+// This class takes its inputs (in terms of T), multiplies them using *=, then outputs the multiplication expression including the product as a string.
 // For example, given the inputs of 3 and 4, it outputs the string "3 * 4 = 12".
 template<typename T>
-class multiplication_expressifier : public flow::transformer
+class multiplication_expressifier : public flow::transformer<T, string>
 {
 public:
-	multiplication_expressifier(size_t ins = 2, const string& name_r = "multiplication_expressifier") : node(name_r), transformer(name_r, ins, 1) {}
+	multiplication_expressifier(size_t ins = 2, const string& name_r = "multiplication_expressifier") : flow::node(name_r), flow::transformer<T, string>(name_r, ins, 1) {}
 
 	virtual ~multiplication_expressifier() {}
 
@@ -27,9 +27,9 @@ public:
 		bool all = true;
 
 		// Confirm.
-		for(size_t i = 0; i != ins() && all; ++i)
+		for(size_t i = 0; i != flow::consumer<T>::ins() && all; ++i)
 		{
-			if(!input(i).peek())
+			if(!flow::consumer<T>::input(i).peek())
 			{
 				all = false;
 			}
@@ -39,41 +39,36 @@ public:
 		if(all)
 		{
 			// Gather the terms in a container.
-			vector<unique_ptr<flow::packet>> terms;
+			vector<unique_ptr<flow::packet<T>>> terms;
 
-			for(size_t i = 0; i != ins(); ++i)
+			for(size_t i = 0; i != flow::consumer<T>::ins(); ++i)
 			{
-				terms.emplace_back(move(input(i).pop()));
+				terms.emplace_back(move(flow::consumer<T>::input(i).pop()));
 			}
 
 			// Start the product as equal to the first term.
-			T product(*reinterpret_cast<T*>(&terms[0]->data()[0]));
+			T product(terms[0]->data());
 
 			// Multiply by the value of all other packets.
-			for_each(terms.begin() + 1, terms.end(), [&product](const unique_ptr<flow::packet>& packet_up_r){
-				product *= *reinterpret_cast<T*>(&packet_up_r->data()[0]);
+			for_each(terms.begin() + 1, terms.end(), [&product](const unique_ptr<flow::packet<T>>& packet_up_r){
+				product *= packet_up_r->data();
 			});
 
 			// Using a stringstream, aggregate all the factors and the product to form the multiplication expression.
 			stringstream ss;
-			ss << *reinterpret_cast<T*>(&(terms[0]->data()[0]));
-			for_each(terms.begin() + 1, terms.end(), [&ss](const unique_ptr<flow::packet>& packet_up_r){
-				ss << " * " << *reinterpret_cast<T*>(&packet_up_r->data()[0]);
+			ss << terms[0]->data();
+			for_each(terms.begin() + 1, terms.end(), [&ss](const unique_ptr<flow::packet<T>>& packet_up_r){
+				ss << " * " << packet_up_r->data();
 			});
 			ss << " = " << product;
 
-			// This now looks like "a * b [* x] = p".
-			string expression = ss.str();
+			// ss now looks like "a * b [* x] = p".
 
 			// Make a packet with the expression.
-			vector<unsigned char> data(sizeof(string));
-			new(&data[0]) string;
-			*reinterpret_cast<string*>(&data[0]) = expression;
-
-			unique_ptr<flow::packet> p(new flow::packet(move(data)));
+			unique_ptr<flow::packet<string>> p(new flow::packet<string>(ss.str()));
 
 			// Output it.
-			output(0).push(move(p));
+			flow::producer<string>::output(0).push(move(p));
 		}
 	}
 };
@@ -92,25 +87,30 @@ int main()
 	uniform_int_distribution<size_t> uniform(0, 10);
 	auto generator = bind(uniform, ref(engine));
 
-	// Create three generators.
-	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g1"));
-	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g2"));
-	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g3"));
+	// Create three generators and add them to the graph.
+	auto sp_g1 = make_shared<flow::samples::generic::generator<int>>(mt, generator, "g1");
+	auto sp_g2 = make_shared<flow::samples::generic::generator<int>>(mt, generator, "g2");
+	auto sp_g3 = make_shared<flow::samples::generic::generator<int>>(mt, generator, "g3");
+	g.add(sp_g1);
+	g.add(sp_g2);
+	g.add(sp_g3);
 	
 	// Include a multiplication_expressifier with three inputs.
 	// We specify its inputs to be ints, but its output will always be a string.
-	g.add(make_shared<multiplication_expressifier<int>>(3, "me1"));
+	auto sp_me1 = make_shared<multiplication_expressifier<int>>(3, "me1");
+	g.add(sp_me1);
 
 	// Include a consumer that just prints the data packets to cout.
-	g.add(make_shared<flow::samples::generic::ostreamer<string>>(cout, "o1"));
+	auto sp_o1 = make_shared<flow::samples::generic::ostreamer<string>>(cout, "o1");
+	g.add(sp_o1);
 
 	// Connect the three generators to the multiplication_expressifier.
-	g.connect("g1", 0, "me1", 0);
-	g.connect("g2", 0, "me1", 1);
-	g.connect("g3", 0, "me1", 2);
+	g.connect<int>(sp_g1, 0, sp_me1, 0);
+	g.connect<int>(sp_g2, 0, sp_me1, 1);
+	g.connect<int>(sp_g3, 0, sp_me1, 2);
 
 	// Connect the multiplication_expressifier to the ostreamer.
-	g.connect("me1", 0, "o1", 0);
+	g.connect<string>(sp_me1, 0, sp_o1, 0);
 
 	// Start the timer on its own thread so it doesn't block us here.
 	thread mt_t(ref(mt));

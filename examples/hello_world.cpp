@@ -33,28 +33,34 @@ int main()
 	flow::graph g;
 
 	// Include in the graph three generators, one with each function defined above.
-	g.add(make_shared<flow::samples::generic::generator<string>>(mt, hello, "g1"));
-	g.add(make_shared<flow::samples::generic::generator<string>>(mt, space, "g2"));
-	g.add(make_shared<flow::samples::generic::generator<string>>(mt, world, "g3"));
+	auto sp_g1 = make_shared<flow::samples::generic::generator<string>>(mt, hello, "g1");
+	auto sp_g2 = make_shared<flow::samples::generic::generator<string>>(mt, space, "g2");
+	auto sp_g3 = make_shared<flow::samples::generic::generator<string>>(mt, world, "g3");
+	g.add(sp_g1);
+	g.add(sp_g2);
+	g.add(sp_g3);
 
 	// Include an adder with three inputs.
-	g.add(make_shared<flow::samples::math::adder<string>>(3, "a1"));
+	auto sp_a1 = make_shared<flow::samples::math::adder<string>>(3, "a1");
+	g.add(sp_a1);
 
 	// Include a consumer that just prints the data packets to std::cout.
-	g.add(make_shared<flow::samples::generic::ostreamer<string>>(cout, "o1"));
+	auto sp_o1 = make_shared<flow::samples::generic::ostreamer<string>>(cout, "o1");
+	g.add(sp_o1);
 
 	// Connect all three generators to the adder.
-	g.connect("g1", 0, "a1", 0);
-	g.connect("g2", 0, "a1", 1);
-	g.connect("g3", 0, "a1", 2);
+	g.connect<string>(sp_g1, 0, sp_a1, 0);
+	g.connect<string>(sp_g2, 0, sp_a1, 1);
+	g.connect<string>(sp_g3, 0, sp_a1, 2);
 
 	// Connect the adder to the ostreamer.
-	g.connect("a1", 0, "o1", 0);
+	g.connect<string>(sp_a1, 0, sp_o1, 0);
 
 	// Start the timer on its own thread so it doesn't block us here.
 	thread mt_t(ref(mt));
 
 	// Start the graph! Now we should see "Hello, world!" printed to the standard output every three seconds.
+
 	g.start();
 
 	// Wait for some input. And when we get it...

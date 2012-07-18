@@ -16,7 +16,10 @@
 namespace flow
 {
 
+template<typename T>
 class inpin;
+
+template<typename T>
 class outpin;
 
 //!\brief Carries packets from node to node on a FIFO basis.
@@ -25,12 +28,13 @@ class outpin;
 //! If packet accumulation is expected but memory usage is a concern, length and weight can be specified.
 //! Packet accumulation should be intermittent rather than constant or memory usage will grow at the rate of accumulation.
 //! A graph that produces more data than it consumes is unbalanced and should be modified.
+template<typename T>
 class pipe : public named
 {
-	std::deque<std::unique_ptr<packet> > d_packets;
+	std::deque<std::unique_ptr<packet<T>>> d_packets;
 
-	outpin *d_input_p;
-	inpin *d_output_p;
+	outpin<T> *d_input_p;
+	inpin<T> *d_output_p;
 
 	size_t d_max_length;
 	size_t d_max_weight;
@@ -45,7 +49,7 @@ public:
 	//!\param input_p The input pin of the consuming node.
 	//!\param max_length The maximum number of nodes this pipe will carry.
 	//!\param max_weight The maximum number of bytes this pipe will carry.
-	pipe(const std::string& name_r, outpin *output_p, inpin *input_p, const size_t max_length = 0, const size_t max_weight = 0)
+	pipe(const std::string& name_r, outpin<T> *output_p, inpin<T> *input_p, const size_t max_length = 0, const size_t max_weight = 0)
 		: named(name_r), d_input_p(output_p), d_output_p(input_p), d_max_length(max_length), d_max_weight(max_weight), d_weight(0)
 	{}
 
@@ -57,13 +61,13 @@ public:
 	virtual ~pipe() {}
 
 	//!\brief Pointer to the producing node's output pin.
-	virtual outpin* input() const
+	virtual outpin<T>* input() const
 	{
 		return d_input_p;
 	}
 
 	//!\brief Pointer to the consuming node's input pin.
-	virtual inpin* output() const
+	virtual inpin<T>* output() const
 	{
 		return d_output_p;
 	}
@@ -126,7 +130,7 @@ public:
 	//!				   If this call is unsuccessful, packet_p will still point to the packet after the call.
 	//!
 	//!\return true if the packet was successfully moved to the pipe, false otherwise.
-	virtual bool push(std::unique_ptr<packet> packet_p)
+	virtual bool push(std::unique_ptr<packet<T>> packet_p)
 	{
 		if(d_max_length && (d_packets.size() == d_max_length)) return false;
 		if(d_max_weight && (d_weight + packet_p->size() > d_max_weight)) return false;
@@ -142,11 +146,11 @@ public:
 	//! Used by the consuming node to move a packet from the pipe to consume.
 	//!
 	//!\return A pointer to the next packet in the pipe, empty pointer if there is no packet.
-	virtual std::unique_ptr<packet> pop()
+	virtual std::unique_ptr<packet<T>> pop()
 	{
-		if(!d_packets.size()) return std::unique_ptr<packet>();
+		if(!d_packets.size()) return std::unique_ptr<packet<T>>();
 
-		std::unique_ptr<packet> packet_p(std::move(d_packets.front()));
+		std::unique_ptr<packet<T>> packet_p(std::move(d_packets.front()));
 		
 		d_packets.pop_front();
 		d_weight -= packet_p->size();

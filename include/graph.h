@@ -22,7 +22,7 @@ namespace flow
 //! When starting or stopping a graph, nodes are started and stopped in a fashion to minize build-up of packets.
 class graph : public named
 {
-	typedef std::map<std::string, std::shared_ptr<node> > nodes_t;
+	typedef std::map<std::string, std::shared_ptr<node>> nodes_t;
 	nodes_t d_producers, d_transformers, d_consumers;
 
 	typedef std::map<std::string, std::unique_ptr<std::thread>> threads_t;
@@ -38,20 +38,20 @@ public:
 		stop();
 	}
 
-	//!\brief Adds a node to the graph.
+	//!\brief Adds a consumer node to the graph.
 	//!
 	//! The node will be disconnected.
 	virtual void add(std::shared_ptr<node> node_p)
 	{
-		if(dynamic_cast<transformer*>(node_p.get()))
+		if(std::dynamic_pointer_cast<detail::transformer>(node_p))
 		{
 			d_transformers[node_p->name()] = node_p;
 		}
-		else if(dynamic_cast<producer*>(node_p.get()))
+		else if(std::dynamic_pointer_cast<detail::producer>(node_p))
 		{
 			d_producers[node_p->name()] = node_p;
 		}
-		else if(dynamic_cast<consumer*>(node_p.get()))
+		else if(std::dynamic_pointer_cast<detail::consumer>(node_p))
 		{
 			d_consumers[node_p->name()] = node_p;
 		}
@@ -63,63 +63,37 @@ public:
 	virtual std::shared_ptr<node> remove(const std::string& name_r)
 	{
 		std::shared_ptr<node> p;
+		nodes_t *n;
+		nodes_t::iterator i;
 
-		nodes_t *nodes_p;
-		auto i = find(name_r, nodes_p);
-
-		if(nodes_p)
+		if(n = find(name_r, i))
 		{
-			// Disconnect all inpins.
-			consumer *c_p = dynamic_cast<consumer*>(i->second.get());
-			if(c_p)
-			{
-				for(size_t i = 0; i != c_p->ins(); ++i)
-				{
-					c_p->input(i).disconnect();
-				}
-			}
-
-			// Disconnect all outpins.
-			producer *p_p = dynamic_cast<producer*>(i->second.get());
-			if(p_p)
-			{
-				for(size_t i = 0; i != p_p->outs(); ++i)
-				{
-					p_p->output(i).disconnect();
-				}
-			}
-
+			i->second->sever();
 			p = i->second;
-			nodes_p->erase(i);
+			n->erase(i);
 		}
 
 		return p;
 	}
 
-	//!\brief Conect two nodes from the graph together.
+	//!\brief Connect two nodes from the graph together.
 	//!
-	//!\param p_name_r The name of the producing node.
+	//!\param sp_producer_r The producing node.
 	//!\param p_pin The index of the producing node's output pin to connect.
-	//!\param c_name_r The name of the consuming node.
+	//!\param sp_consumer_r The consuming node.
 	//!\param c_pin The index of the consuming node's input pin to connect.
-	virtual bool connect(const std::string& p_name_r, const size_t p_pin, const std::string& c_name_r, const size_t c_pin)
+	template<typename T>
+	bool connect(std::shared_ptr<flow::producer<T>> sp_producer_r, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_consumer_r, const size_t c_pin)
 	{
-		nodes_t *nodes_p;
-		auto p_node_i = find(p_name_r, nodes_p);
+		nodes_t::iterator i;
 		
-		if(!nodes_p)
+		// Confirm these two nodes are in the graph.
+		if(!find(sp_producer_r->name(), i) || !find(sp_consumer_r->name(), i))
 		{
 			return false;
 		}
 		
-		auto c_node_i = find(c_name_r, nodes_p);
-
-		if(!nodes_p)
-		{
-			return false;
-		}
-
-		dynamic_cast<producer*>(p_node_i->second.get())->output(p_pin).connect(dynamic_cast<consumer*>(c_node_i->second.get())->input(c_pin));
+		sp_producer_r->connect(p_pin, sp_consumer_r.get(), c_pin);
 
 		return true;
 	}
@@ -188,45 +162,25 @@ public:
 		std::for_each(d_consumers.begin(), d_consumers.end(), stop_f);
 	}
 
-	//!\brief Finds a node in the graph.
-	//!
-	//!\param name_r The name of the node to find.
-	//!
-	//!\return A pointer to the node if found, 0 otherwise.
-	virtual node* find(const std::string& name_r)
-	{
-		nodes_t *nodes_p;
-		auto i = find(name_r, nodes_p);
-		
-		if(nodes_p)
-		{
-			return i->second.get();
-		}
-
-		return 0;
-	}
-
 private:
-	virtual nodes_t::iterator find(const std::string& name_r, nodes_t*& nodes_pr)
+	virtual nodes_t* find(const std::string& name_r, nodes_t::iterator& i)
 	{
-		nodes_pr = 0;
-
-		auto i = d_producers.find(name_r);
+		i = d_producers.find(name_r);
 
 		if(i != d_producers.end())
 		{
-			nodes_pr = &d_producers;
+			return &d_producers;
 		}
 		else if((i = d_transformers.find(name_r)) != d_transformers.end())
 		{
-			nodes_pr = &d_transformers;
+			return &d_transformers;
 		}
 		else if((i = d_consumers.find(name_r)) != d_consumers.end())
 		{
-			nodes_pr = &d_consumers;
+			return &d_consumers;
 		}
 
-		return i;
+		return nullptr;
 	}
 };
 
