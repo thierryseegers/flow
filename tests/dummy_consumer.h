@@ -3,21 +3,16 @@
 
 #include "node.h"
 
-class dummy_consumer : public flow::consumer
+class dummy_consumer : public flow::consumer<int>
 {
 public:
-	dummy_consumer() : flow::node("dummy_consumer"), flow::consumer("dummy_consumer", 0)
+	dummy_consumer() : flow::node("dummy_consumer"), flow::consumer<int>("dummy_consumer", 0)
 	{
 	}
 
 	~dummy_consumer()
 	{
 		int i = 22;
-	}
-
-	virtual void stop()
-	{
-		consumer::stop();
 	}
 
 	virtual void ready(size_t)

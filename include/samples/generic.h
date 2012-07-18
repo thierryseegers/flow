@@ -26,7 +26,7 @@ namespace flow { namespace samples { namespace generic {
 
 //!\brief Concrete producer that generates packets by calling a parameter functor.
 template<typename T>
-class generator : public producer
+class generator : public producer<T>
 {
 	std::function<T ()> d_gen_f;
 
@@ -36,7 +36,7 @@ public:
 	//!\param timer_r Timer that will signal when to produce a packet.
 	//!\param gen_f The functor to be called. The return value of this functor will be considered a packet.
 	//!\param name_r The name to give this node.
-	generator(timer& timer_r, const std::function<T ()>& gen_f, const std::string& name_r = "generator") : node(name_r), producer(name_r, 1), d_gen_f(gen_f), d_awaken_m(false)
+	generator(timer& timer_r, const std::function<T ()>& gen_f, const std::string& name_r = "generator") : node(name_r), producer<T>(name_r, 1), d_gen_f(gen_f), d_awaken_m(false)
 	{
 		timer_r.listen(std::bind(&generator::timer_fired, this));
 	}
@@ -46,7 +46,7 @@ public:
 	//!\brief implementation of node::stop().
 	virtual void stop()
 	{
-		producer::stop();
+		producer<T>::stop();
 
 		*d_awaken_m.access() = true;
 	}
@@ -65,22 +65,18 @@ public:
 	{
 		*d_awaken_m.wait() = false;
 
-		if(*d_state_m.const_access() != stop_requested)
+		if(*producer<T>::d_state_m.const_access() != stop_requested)
 		{
-			std::vector<unsigned char> data(sizeof(T));
-			new(&data[0]) T;
-			*reinterpret_cast<T*>(&data[0]) = d_gen_f();
+			std::unique_ptr<packet<T>> packet_p(new packet<T>(d_gen_f()));
 
-			std::unique_ptr<packet> packet_p(new packet(std::move(data)));
-
-			output(0).push(std::move(packet_p));
+			producer<T>::output(0).push(std::move(packet_p));
 		}
 	}
 };
 
 //!\brief Concrete consumer that outputs packets to a parameter std::ostream.
 template<typename T>
-class ostreamer : public consumer
+class ostreamer : public consumer<T>
 {
 	std::ostream& d_o_r;
 
@@ -93,14 +89,14 @@ public:
 	//!
 	//!\param o_r Reference to the output stream.
 	//!\param name_r The name to give this node.
-	ostreamer(std::ostream& o_r, const std::string& name_r = "ostreamer") : node(name_r), consumer(name_r, 1), d_o_r(o_r), d_awaken_m(false) {}
+	ostreamer(std::ostream& o_r, const std::string& name_r = "ostreamer") : node(name_r), consumer<T>(name_r, 1), d_o_r(o_r), d_awaken_m(false) {}
 
 	virtual ~ostreamer() {}
 
 	//!\brief Implementation of node::stop().
 	virtual void stop()
 	{
-		consumer::stop();
+		consumer<T>::stop();
 
 		*d_awaken_m.access() = true;
 	}
@@ -114,14 +110,14 @@ public:
 	//! - in the past: the packet is unused and lost.
 	virtual void ready(size_t)
 	{
-		std::unique_ptr<packet> packet_p;
+		std::unique_ptr<packet<T>> packet_p;
 
-		while((packet_p = input(0).pop()) && (*d_state_m.const_access() != stop_requested))
+		while((packet_p = consumer<T>::input(0).pop()) && (*consumer<T>::d_state_m.const_access() != stop_requested))
 		{
-			if(packet_p->consumption_time() == packet::time_point_type())
+			if(packet_p->consumption_time() == typename packet<T>::time_point_type())
 			{
 				// This packet has no set consumption time. Consume it immediately.
-				d_o_r << *reinterpret_cast<T*>(&packet_p->data()[0]) << std::endl;
+				d_o_r << packet_p->data() << std::endl;
 			}
 			else if(packet_p->consumption_time() > std::chrono::high_resolution_clock::now())
 			{
@@ -132,16 +128,16 @@ public:
 				// Wait until the sleep thread is done or stop was requested.
 				*d_awaken_m.wait() = false;
 
-				if(*d_state_m.const_access() != stop_requested)
+				if(*consumer<T>::d_state_m.const_access() != stop_requested)
 				{
-					d_o_r << *reinterpret_cast<T*>(&packet_p->data()[0]) << std::endl;
+					d_o_r << packet_p->data() << std::endl;
 				}
 			}
 		}
 	}
 
 private:
-	virtual void sleep(const packet::time_point_type& time_r)
+	virtual void sleep(const typename packet<T>::time_point_type& time_r)
 	{
 		std::this_thread::sleep_until(time_r);
 
@@ -150,14 +146,15 @@ private:
 };
 
 //!\brief Concrete transformer that clones one input packet to multiple output packets.
-class tee : public transformer
+template<typename T>
+class tee : public transformer<T, T>
 {
 public:
 	//! The number of ouput pins specified is the number of clones this node will output.
 	//!
 	//!\param outs Number of output pins.
 	//!\param name_r The name to give this node.
-	tee(const size_t outs = 2, const std::string& name_r = "tee") : node(name_r), transformer(name_r, 1, outs) {}
+	tee(const size_t outs = 2, const std::string& name_r = "tee") : node(name_r), transformer<T, T>(name_r, 1, outs) {}
 
 	virtual ~tee() {}
 
@@ -167,23 +164,24 @@ public:
 	//! It is also copied into the rest of the ouput pipes.
 	virtual void ready(size_t)
 	{
-		std::unique_ptr<packet> packet_p;
+		std::unique_ptr<packet<T>> packet_p;
 			
-		while(packet_p = input(0).pop())
+		while(packet_p = consumer<T>::input(0).pop())
 		{
-			for(size_t i = 1; i != outs(); ++i)
+			for(auto& out : producer<T>::outs())
 			{
-				std::unique_ptr<packet> copy_p(new packet(*packet_p));
-				output(i).push(std::move(copy_p));
+				std::unique_ptr<packet<T>> copy_p(new packet<T>(*packet_p));
+				out.push(std::move(copy_p));
 			}
 
-			output(0).push(std::move(packet_p));
+			producer<T>::output(0).push(std::move(packet_p));
 		}
 	}
 };
 
 //!\brief Concrete transformer that adds a delay to a packet's consumption time.
-class delay : public transformer
+template<typename T>
+class delay : public transformer<T, T>
 {
 	std::chrono::milliseconds d_offset;
 
@@ -191,7 +189,7 @@ public:
 	//!\param offset_r The delay to add to the packets' consumption time.
 	//!\param name_r The name to give this node.
 	template<typename Duration>
-	delay(const Duration& offset_r, const std::string& name_r = "delay") : node(name_r), transformer(name_r, 1, 1), d_offset(offset_r) {}
+	delay(const Duration& offset_r, const std::string& name_r = "delay") : node(name_r), transformer<T, T>(name_r, 1, 1), d_offset(offset_r) {}
 
 	virtual ~delay() {}
 
@@ -200,11 +198,11 @@ public:
 	//! If a packet has no set consumption time, then its consumption is set to the time at which this node has received the packet plus the given delay.
 	virtual void ready(size_t)
 	{
-		std::unique_ptr<packet> packet_p;
+		std::unique_ptr<packet<T>> packet_p;
 
-		while(packet_p = input(0).pop())
+		while(packet_p = consumer<T>::input(0).pop())
 		{
-			if(packet_p->consumption_time() == packet::time_point_type())
+			if(packet_p->consumption_time() == packet<T>::time_point_type())
 			{
 				packet_p->consumption_time() = std::chrono::high_resolution_clock::now() + d_offset;
 			}
@@ -213,7 +211,7 @@ public:
 				packet_p->consumption_time() += d_offset;
 			}
 
-			output(0).push(std::move(packet_p));
+			producer<T>::output(0).push(std::move(packet_p));
 		}
 	}
 };

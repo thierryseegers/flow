@@ -28,6 +28,9 @@ public:
 	//!\brief Move constructor.
 	named(named&& name_rr) : d_name(std::move(name_rr.d_name)) {}
 
+	//!\brief Copy constructor.
+	named(const named& name_r) : d_name(name_r.d_name) {}
+	
 	virtual ~named() {}
 
 	//!\brief A const reference to this object's name.

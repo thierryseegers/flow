@@ -24,9 +24,15 @@
 namespace flow
 {
 
-class inpin;
-class node;
+// Forward declarations.
+
+template<typename T>
 class outpin;
+
+template<typename T>
+class producer;
+
+class graph;
 
 //!\enum flow::state
 //!
@@ -47,70 +53,24 @@ enum state
 //!
 //! Pins are connected to one another through pipes.
 //! Even when one pin is disconnected, the pipe remains attached to the remaining pin to mimize packet loss.
+template<typename T>
 class pin : public named
 {
 protected:
-	std::shared_ptr<lwsync::critical_resource<pipe> > d_pipe_cr_sp; //!< Shared ownership of a pipe with the pin to which this pin is connected.
+	std::shared_ptr<lwsync::critical_resource<pipe<T>>> d_pipe_cr_sp; //!< Shared ownership of a pipe with the pin to which this pin is connected.
+
+	friend class outpin<T>;
 
 public:
-	//!\brief The flow direction of this pin.
-	enum dir
-	{
-		in,		//!< Flows into the node.
-		out		//!< Flows out of the node.
-	};
-
 	//!\param name_r The name of this pin. This will be typically generated from the name of the owning node.
 	pin(const std::string& name_r) : named(name_r) {}
 
+	//!\brief Copy constructor.
+	//!
+	//!\param pin_r The pin to copy from.
+	pin(const pin<T>& pin_r) : named(pin_r) {}
+
 	virtual ~pin() {}
-
-	//!\brief The direction of this pin.
-	virtual dir direction() const = 0;
-
-	//!\brief Connect this pin to another pin with a pipe.
-	//!
-	//! The connection must be between pins of opposing direction.
-	//! It is assumed that this call is made through either inpin::connect or outpin::connect, thus that this pin is an inpin and that other is an outpin.
-	//! If the output pin is already connected to a pipe, it will be disconnected.
-	//! If the input pin is already connected to a pipe, it will be reused.
-	//!
-	//!\param other The pin to which to connect this pin.
-	//!\param max_length The maximum length to give the pipe.
-	//!\param max_weight The maximum weight to give the pipe.
-	virtual void connect(pin* other, const size_t max_length = 0, const size_t max_weight = 0)
-	{
-		assert(other);
-		assert(direction() == in);
-		assert(other->direction() == out);
-
-		// Disconnect the input of the other's pipe.
-		if(other->d_pipe_cr_sp)
-		{
-			auto other_pipe_a = other->d_pipe_cr_sp->access();
-			if(other_pipe_a->input()){
-				reinterpret_cast<pin*>(other_pipe_a->input())->disconnect();
-			}
-		}
-
-		if(d_pipe_cr_sp)
-		{
-			// This inpin already has a pipe, connect the outpin to it.
-			auto this_pipe_a = d_pipe_cr_sp->access();
-		
-			other->d_pipe_cr_sp = d_pipe_cr_sp;
-			this_pipe_a->rename(other->name() + "_to_" + name());
-
-			if(max_length) this_pipe_a->cap_length(max_length);
-			if(max_weight) this_pipe_a->cap_length(max_weight);
-		}
-		else
-		{
-			// This inpin has no pipe, make a new one.
-			pipe p(other->name() + "_to_" + name(), reinterpret_cast<outpin*>(other), reinterpret_cast<inpin*>(this), max_length, max_weight);
-			other->d_pipe_cr_sp = d_pipe_cr_sp = std::make_shared<lwsync::critical_resource<pipe> >(std::move(p)); 
-		}
-	}
 
 	//!\brief Disconnects this pin from its pipe.
 	virtual void disconnect()
@@ -122,9 +82,12 @@ public:
 //!\brief Object that represents a node inlet.
 //!
 //! Nodes that consume packets, i.e. transformers and consumers, have at least one inpin.
-class inpin : public pin
+template<typename T>
+class inpin : public pin<T>
 {
 	lwsync::monitor<state> &d_state_m_r;
+
+	using pin<T>::d_pipe_cr_sp;
 
 public:
 	//!\brief Constructor that takes a name and a reference to the consuming node's state monitor.
@@ -133,34 +96,14 @@ public:
 	//!
 	//!\param name_r The name to give this node.
 	//!\param state_m_r Reference to the node's state monitor.
-	inpin(const std::string& name_r, lwsync::monitor<state>& state_m_r) : pin(name_r), d_state_m_r(state_m_r) {}
+	inpin(const std::string& name_r, lwsync::monitor<state>& state_m_r) : pin<T>(name_r), d_state_m_r(state_m_r) {}
 
 	//!\brief Copy constructor.
-	inpin& operator=(const inpin& inpin_r)
-	{
-		d_pipe_cr_sp = inpin_r.d_pipe_cr_sp;
-		d_state_m_r = inpin_r.d_state_m_r;
-
-		return *this;
-	}
+	//!
+	//!\param inpin_r The inpin to copy from.
+	inpin(const inpin<T>& inpin_r) : pin<T>(inpin_r), d_state_m_r(inpin_r.d_state_m_r) {}
 
 	virtual ~inpin() {}
-
-	//!\brief The direction of this pin.
-	//!
-	//!\return pin::in.
-	virtual dir direction() const { return in; }
-
-	//!\brief Connects this pin to an output pin.
-	//!
-	//!\param outpin_r The output pin this pin will be connected to.
-	//!\param max_length The maximum length to give the pipe.
-	//!\param max_weight The maximum weight to give the pipe.
-	virtual void connect(outpin& outpin_r, const size_t max_length = 0, const size_t max_weight = 0)
-	{
-		// We must use "dumb" casting here because outpin has not yet been defined as deriving from pin.
-		return this->pin::connect(reinterpret_cast<pin*>(&outpin_r), max_length, max_weight);
-	}
 
 	//!\brief Check whether a packet is in the pipe.
 	//!
@@ -175,12 +118,12 @@ public:
 	//!\brief Extracts a packet from the pipe.
 	//!
 	//!\return The next packet to be consumed if the inpin is connected to a pipe and the pipe is not empty, empty pointer otherwise.
-	virtual std::unique_ptr<packet> pop()
+	virtual std::unique_ptr<packet<T>> pop()
 	{
-		if(!d_pipe_cr_sp) return std::unique_ptr<packet>();
+		if(!d_pipe_cr_sp) return std::unique_ptr<packet<T>>();
 
 		auto pipe_m_a = d_pipe_cr_sp->access();
-		return pipe_m_a->length() ? pipe_m_a->pop() : std::unique_ptr<packet>();
+		return pipe_m_a->pop();
 	}
 
 	//!\brief Notifies this pin that a packet has been queued to the pipe.
@@ -200,28 +143,64 @@ public:
 //!\brief Object that represents a node outlet.
 //!
 //! Nodes that produce packets, i.e. producers and transformers, have at least one outpin.
-class outpin : public pin
+template<typename T>
+class outpin : public pin<T>
 {
-public:
-	//!\param name_r The name to give this outpin.
-	outpin(const std::string& name_r) : pin(name_r) {}
+	using pin<T>::d_pipe_cr_sp;
 
-	virtual ~outpin() {}
-
-	//!\brief The direction of this pin.
+	//!\brief Connect this outpin to an inpin with a pipe.
 	//!
-	//!\return pin::out.
-	virtual dir direction() const { return out; }
-
-	//!\brief Connects this pin to an input pin.
+	//! If this output pin is already connected to a pipe, it will be disconnected.
+	//! If the input pin is already connected to a pipe, it will be reused.
 	//!
-	//!\param inpin_r The input pin this pin will be connected to.
+	//!\param inpin_r The inpin to which to connect this outpin.
 	//!\param max_length The maximum length to give the pipe.
 	//!\param max_weight The maximum weight to give the pipe.
-	virtual void connect(inpin& inpin_r, const size_t max_length = 0, const size_t max_weight = 0)
+	virtual void connect(inpin<T>& inpin_r, const size_t max_length = 0, const size_t max_weight = 0)
 	{
-		return inpin_r.connect(*this, max_length, max_weight);
+		// Disconnect this outpin from it's pipe, if it has one.
+		if(d_pipe_cr_sp)
+		{
+			pin<T>::disconnect();
+		}
+
+		if(inpin_r.pin<T>::d_pipe_cr_sp)
+		{
+			// The inpin already has a pipe, connect this outpin to it.
+			auto inpin_pipe_a = inpin_r.pin<T>::d_pipe_cr_sp->access();
+		
+			//... but first, diconnects it from it's other output pin.
+			if(inpin_pipe_a->input()){
+				inpin_pipe_a->input()->disconnect();
+			}
+
+			d_pipe_cr_sp = inpin_r.pin<T>::d_pipe_cr_sp;
+			inpin_pipe_a->rename(pin<T>::name() + "_to_" + inpin_r.pin<T>::name());
+
+			// Overwrite the pipe's parameters with new ones.
+			inpin_pipe_a->cap_length(max_length);
+			inpin_pipe_a->cap_length(max_weight);
+		}
+		else
+		{
+			// The inpin has no pipe, make a new one.
+			pipe<T> p(pin<T>::name() + "_to_" + inpin_r.pin<T>::name(), this, &inpin_r, max_length, max_weight);
+			d_pipe_cr_sp = inpin_r.pin<T>::d_pipe_cr_sp = std::make_shared<lwsync::critical_resource<pipe<T>>>(std::move(p)); 
+		}
 	}
+
+	friend class producer<T>;
+
+public:
+	//!\param name_r The name to give this outpin.
+	outpin(const std::string& name_r) : pin<T>(name_r) {}
+
+	//!\brief Copy constructor.
+	//!
+	//!\param outpin_r The inpin to copy from.
+	outpin(const outpin<T>& outpin_r) : pin<T>(outpin_r) {}
+
+	virtual ~outpin() {}
 
 	//!\brief Moves a packet to the pipe.
 	//!
@@ -229,11 +208,11 @@ public:
 	//! If the pipe has reached capacity, the call to pipe::push will fail and packet_p will remain valid.
 	//!
 	//!\return true if the packet was successfully moved to the pipe, false otherwise.
-	virtual bool push(std::unique_ptr<packet> packet_p)
+	virtual bool push(std::unique_ptr<packet<T>> packet_p)
 	{
 		if(!d_pipe_cr_sp) return false;
 
-		inpin* inpin_p = 0;
+		inpin<T>* inpin_p = 0;
 		{
 			auto pipe_cr_a = d_pipe_cr_sp->access();
 			if(pipe_cr_a->push(std::move(packet_p)))
@@ -293,6 +272,9 @@ public:
 		*d_state_m.access() = stop_requested;
 	}
 
+	//!\brief Disconnect all pins.
+	virtual void sever() = 0;
+
 	//!\brief The node's execution function.
 	//!
 	//! This is the function that will be called to start execution.
@@ -300,12 +282,55 @@ public:
 	virtual void operator()() = 0;
 };
 
+//!\cond
+namespace detail
+{
+
+// These base classes help flow::graph distinguish between types of nodes without having to know their template types.
+
+class producer
+{
+public:
+	virtual ~producer() {}
+};
+
+class transformer
+{
+public:
+	virtual ~transformer() {}
+};
+
+class consumer
+{
+public:
+	virtual ~consumer() {}
+};
+
+}
+//!\endcond
+
+template<typename T>
+class consumer;
+
 //!\brief Base class from which concrete pure producers derive.
 //!
 //! Concrete transformers should derive from flow::transformer.
-class producer : public virtual node
+template<typename T>
+class producer : public virtual node, public detail::producer
 {
-	std::vector<outpin> d_outputs;
+	std::vector<outpin<T>> d_outputs;
+
+	//!\brief Connect this producer to a consumer.
+	//!
+	//!\param p_pin The index of this node's output pin.
+	//!\param consumer_p Pointer to the consumer node to conenct to.
+	//!\param c_pin The index of the consumer node's input pin.
+	virtual void connect(size_t p_pin, consumer<T>* consumer_p, size_t c_pin)
+	{
+		output(p_pin).connect(consumer_p->input(c_pin));
+	}
+
+	friend class graph;
 
 public:
 	//!\param name_r The name to give this node.
@@ -314,7 +339,7 @@ public:
 	{
 		for(size_t i = 0; i != outs; ++i)
 		{
-			d_outputs.push_back(outpin(name_r + "_out" + static_cast<char>('0' + i)));
+			d_outputs.push_back(outpin<T>(name_r + "_out" + static_cast<char>('0' + i)));
 		}
 	}
 
@@ -326,7 +351,16 @@ public:
 	//!\brief Returns a reference to an outpin pin.
 	//!
 	//!\param n The index of the output pin.
-	virtual outpin& output(const int n) { return d_outputs[n]; }
+	virtual outpin<T>& output(const int n) { return d_outputs[n]; }
+
+	//!\brief Disconnect all pins.
+	virtual void sever()
+	{
+		for(auto& out_r : d_outputs)
+		{
+			out_r.disconnect();
+		}
+	}
 
 	//!\brief The node's execution function.
 	//!
@@ -378,9 +412,10 @@ public:
 //!\brief Base class from which concrete pure consumers derive.
 //!
 //! Concrete transformers should derive from flow::transformer.
-class consumer : public virtual node
+template<typename T>
+class consumer : public virtual node, public detail::consumer
 {
-	std::vector<inpin> d_inputs;
+	std::vector<inpin<T>> d_inputs;
 
 public:
 	//!\param name_r The name to give this node.
@@ -389,7 +424,7 @@ public:
 	{
 		for(size_t i = 0; i != ins; ++i)
 		{
-			d_inputs.push_back(inpin(name_r + "_in" + static_cast<char>('0' + i), d_state_m));
+			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), d_state_m));
 		}
 	}
 
@@ -401,7 +436,16 @@ public:
 	//!\brief Returns a reference to an input pin.
 	//!
 	//!\param n The index of the input pin.
-	virtual inpin& input(const int n) { return d_inputs[n]; }
+	virtual inpin<T>& input(const int n) { return d_inputs[n]; }
+
+	//!\brief Disconnect all pins.
+	virtual void sever()
+	{
+		for(auto& in_r : d_inputs)
+		{
+			in_r.disconnect();
+		}
+	}
 
 	//!\brief The node's execution function.
 	//!
@@ -467,7 +511,8 @@ public:
 };
 
 //!\brief Base class from which concrete transformers derive.
-class transformer : public producer, public consumer
+template<typename C, typename P>
+class transformer : public consumer<C>, public producer<P>, public detail::transformer
 {
 	virtual void produce() {}
 
@@ -475,13 +520,21 @@ public:
 	//!\param name_r The name to give this node.
 	//!\param ins Numbers of input pins.
 	//!\param outs Numbers of output pins.
-	transformer(const std::string& name_r, const size_t ins, const size_t outs) : node(name_r), producer(name_r, outs), consumer(name_r, ins)
+	transformer(const std::string& name_r, const size_t ins, const size_t outs) : node(name_r), consumer<C>(name_r, ins), producer<P>(name_r, outs)
 	{}
 
 	virtual ~transformer() {}
 
+	//!\brief Disconnect all pins.
+	virtual void sever()
+	{
+		consumer<C>::sever();
+
+		producer<P>::sever();
+	}
+
 	//!\brief Implementation of node::operator()().
-	virtual void operator()() { consumer::operator()(); }
+	virtual void operator()() { consumer<C>::operator()(); }
 	
 	//!\brief consumer::ready() function to be implemented by concrete class.
 	virtual void ready(size_t n) = 0;

@@ -13,10 +13,10 @@ namespace flow
 
 //!\brief Object that carries data from node to node through a pipe.
 //!
-//! A packet contains data in the form of a vector of unsigned chars.
-//! Associated with it is an optional time of consumption.
-//! A consumer node will wait before consuming the data in this packet if it arrives to the node early.
-//! If the packet arrives too late, the consumer node will discard it.
+//! Associated with a packet is an optional time of consumption.
+//! A consumer node ought to wait before consuming the data in this packet if it arrives to the node early.
+//! If the packet arrives too late, the consumer node ought to discard it.
+template<typename T>
 class packet
 {
 public:
@@ -24,25 +24,28 @@ public:
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point_type;
 
 private:
-	std::vector<unsigned char> d_data;
+	T d_data;
 
 	time_point_type d_consumption_time;
 
 public:
-	//!\brief Data will be moved, not copied. Time of consumption is optional.
+	//!\brief Constructor.
 	//!
-	//!\param data Bytes to be moved.
-	//!\param consumption_time The time at which a consumer node should consume the data.
-	packet(const std::vector<unsigned char>&& data, const time_point_type& consumption_time = time_point_type())
+	//!\param data Data to be put in the packet.
+	//!\param consumption_time The time at which a consumer node should consume the data. Optional.
+	packet(T data, const time_point_type& consumption_time = time_point_type())
 		: d_data(std::move(data)), d_consumption_time(consumption_time) {}
 
 	virtual ~packet() {}
 
 	//!\brief Returns the number of bytes in this packet.
-	virtual size_t size() const { return d_data.size(); }
+	virtual size_t size() const { return sizeof(T); }
 
 	//!\brief Reference to the data this packet is carrying.
-	virtual std::vector<unsigned char>& data() { return d_data; }
+	virtual T& data() { return d_data; }
+
+	//!\brief Reference to the data this packet is carrying.
+	virtual const T& data() const { return d_data; }
 
 	//!\brief Reference to the time of consumption.
 	virtual time_point_type& consumption_time() { return d_consumption_time; }
