@@ -172,24 +172,6 @@ public:
 		std::for_each(d_consumers.begin(), d_consumers.end(), stop_f);
 	}
 
-	//!\brief Finds a node in the graph.
-	//!
-	//!\param name_r The name of the node to find.
-	//!
-	//!\return A pointer to the node if found, 0 otherwise.
-	virtual node* find(const std::string& name_r)
-	{
-		nodes_t *nodes_p;
-		auto i = find(name_r, nodes_p);
-		
-		if(nodes_p)
-		{
-			return i->second.get();
-		}
-
-		return 0;
-	}
-
 private:
 	virtual nodes_t::iterator find(const std::string& name_r, nodes_t*& nodes_pr)
 	{
