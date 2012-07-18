@@ -77,28 +77,29 @@ public:
 
 	//!\brief Connect two nodes from the graph together.
 	//!
-	//!\param p_name_r The name of the producing node.
+	//!\param sp_producer_r The producing node.
 	//!\param p_pin The index of the producing node's output pin to connect.
-	//!\param c_name_r The name of the consuming node.
+	//!\param sp_consumer_r The consuming node.
 	//!\param c_pin The index of the consuming node's input pin to connect.
-	virtual bool connect(const std::string& p_name_r, const size_t p_pin, const std::string& c_name_r, const size_t c_pin)
+	template<typename T>
+	bool connect(std::shared_ptr<flow::producer<T>> sp_producer_r, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_consumer_r, const size_t c_pin)
 	{
 		nodes_t *nodes_p;
-		auto p_node_i = find(p_name_r, nodes_p);
+		auto p_node_i = find(sp_producer_r->name(), nodes_p);
 		
 		if(!nodes_p)
 		{
 			return false;
 		}
 		
-		auto c_node_i = find(c_name_r, nodes_p);
+		auto c_node_i = find(sp_consumer_r->name(), nodes_p);
 
 		if(!nodes_p)
 		{
 			return false;
 		}
 
-		std::dynamic_pointer_cast<detail::producer>(p_node_i->second)->connect(p_pin, c_node_i->second.get(), c_pin);
+		sp_producer_r->connect(p_pin, sp_consumer_r.get(), c_pin);
 
 		return true;
 	}
