@@ -16,4 +16,5 @@ add_executable(functional ${flow_headers} ${flow_samples} ${functional_headers} 
 set_property(TARGET functional PROPERTY FOLDER "tests")
 
 add_test(instantiate_empty_graph functional instantiate_empty_graph)
-add_test(graph_dummy_nodes functional graph_dummy_nodes)
+add_test(graph_dummy_nodes_unconnected functional graph_dummy_nodes_unconnected)
+add_test(graph_dummy_nodes_connected functional graph_dummy_nodes_connected)
