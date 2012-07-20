@@ -60,6 +60,8 @@ public:
 	//!\brief Removes a node from the graph.
 	//!
 	//!\param name_r The name of the node to remove.
+	//!
+	//!\return Node that was removed.
 	virtual std::shared_ptr<node> remove(const std::string& name_r)
 	{
 		std::shared_ptr<node> p;
@@ -74,6 +76,14 @@ public:
 		}
 
 		return p;
+	}
+
+	//!\brief Removes a node from the graph.
+	//!
+	//!\param sp_node The name of the node to remove.
+	virtual void remove(const std::shared_ptr<node>& sp_node)
+	{
+		remove(sp_node->name());
 	}
 
 	//!\brief Connect two nodes from the graph together.
