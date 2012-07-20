@@ -78,22 +78,48 @@ public:
 
 	//!\brief Connect two nodes from the graph together.
 	//!
-	//!\param sp_producer_r The producing node.
+	//!\param p_name_r Name of the producing node.
 	//!\param p_pin The index of the producing node's output pin to connect.
-	//!\param sp_consumer_r The consuming node.
+	//!\param c_name_r Name of the consuming node.
 	//!\param c_pin The index of the consuming node's input pin to connect.
+	//!
+	//!\return False if the nodes had not yet been added to the graph.
 	template<typename T>
-	bool connect(std::shared_ptr<flow::producer<T>> sp_producer_r, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_consumer_r, const size_t c_pin)
+	bool connect(const std::string& p_name_r, const size_t p_pin, const std::string& c_name_r, const size_t c_pin)
 	{
-		nodes_t::iterator i;
+		nodes_t::iterator p, c;
 		
 		// Confirm these two nodes are in the graph.
-		if(!find(sp_producer_r->name(), i) || !find(sp_consumer_r->name(), i))
+		if(!find(p_name_r, p) || !find(c_name_r, c))
 		{
 			return false;
 		}
 		
-		sp_producer_r->connect(p_pin, sp_consumer_r.get(), c_pin);
+		std::dynamic_pointer_cast<producer<T>>(p->second)->connect(p_pin, std::dynamic_pointer_cast<consumer<T>>(c->second).get(), c_pin);
+
+		return true;
+	}
+
+	//!\brief Connect two nodes from the graph together.
+	//!
+	//!\param sp_p The producing node.
+	//!\param p_pin The index of the producing node's output pin to connect.
+	//!\param sp_c The consuming node.
+	//!\param c_pin The index of the consuming node's input pin to connect.
+	//!
+	//!\return False if the nodes had not yet been added to the graph.
+	template<typename T>
+	bool connect(std::shared_ptr<flow::producer<T>> sp_p, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_c, const size_t c_pin)
+	{
+		nodes_t::iterator i;
+		
+		// Confirm these two nodes are in the graph.
+		if(!find(sp_p->name(), i) || !find(sp_c->name(), i))
+		{
+			return false;
+		}
+		
+		sp_p->connect(p_pin, sp_c.get(), c_pin);
 
 		return true;
 	}
