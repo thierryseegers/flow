@@ -38,9 +38,9 @@ public:
 		stop();
 	}
 
-	//!\brief Adds a consumer node to the graph.
+	//!\brief Adds a node to the graph.
 	//!
-	//! The node will be disconnected.
+	//! The node will initially be disconnected and stopped.
 	virtual void add(std::shared_ptr<node> node_p)
 	{
 		if(std::dynamic_pointer_cast<detail::transformer>(node_p))
@@ -154,9 +154,9 @@ public:
 			}
 		};
 
-		std::for_each(d_consumers.begin(), d_consumers.end(), start_f);
-		std::for_each(d_transformers.begin(), d_transformers.end(), start_f);
-		std::for_each(d_producers.begin(), d_producers.end(), start_f);
+		for(auto& i : d_consumers){ start_f(i); }
+		for(auto& i : d_transformers){ start_f(i); }
+		for(auto& i : d_producers){ start_f(i); }
 	}
 
 	//!\brief Pauses all nodes in the graph.
@@ -169,9 +169,9 @@ public:
 			i.second->pause();
 		};
 
-		std::for_each(d_producers.begin(), d_producers.end(), pause_f);
-		std::for_each(d_transformers.begin(), d_transformers.end(), pause_f);
-		std::for_each(d_consumers.begin(), d_consumers.end(), pause_f);
+		for(auto& i : d_producers){ pause_f(i); }
+		for(auto& i : d_transformers){ pause_f(i); }
+		for(auto& i : d_consumers){ pause_f(i); }
 	}
 
 	//!\brief Stops all nodes in the graph.
@@ -193,9 +193,9 @@ public:
 			}
 		};
 
-		std::for_each(d_producers.begin(), d_producers.end(), stop_f);
-		std::for_each(d_transformers.begin(), d_transformers.end(), stop_f);
-		std::for_each(d_consumers.begin(), d_consumers.end(), stop_f);
+		for(auto& i : d_producers){ stop_f(i); }
+		for(auto& i : d_transformers){ stop_f(i); }
+		for(auto& i : d_consumers){ stop_f(i); }
 	}
 
 private:
