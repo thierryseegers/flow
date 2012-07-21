@@ -7,7 +7,7 @@ template<typename T>
 class dummy_producer : public flow::producer<T>
 {
 public:
-	dummy_producer(size_t ins = 0) : flow::node("dummy_producer"), flow::producer<T>("dummy_producer", ins)
+	dummy_producer(size_t outs = 0) : flow::node("dummy_producer"), flow::producer<T>("dummy_producer", outs)
 	{
 		int i = 22;
 	}
@@ -47,7 +47,7 @@ template<typename T>
 class dummy_consumer : public flow::consumer<T>
 {
 public:
-	dummy_consumer(size_t outs = 0) : flow::node("dummy_consumer"), flow::consumer<T>("dummy_consumer", outs)
+	dummy_consumer(size_t ins = 0) : flow::node("dummy_consumer"), flow::consumer<T>("dummy_consumer", ins)
 	{
 		int i = 22;
 	}
