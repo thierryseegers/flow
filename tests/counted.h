@@ -36,6 +36,29 @@ public:
 };
 
 template<typename T>
+class transformation_counter : public flow::transformer<T, T>
+{
+public:
+	std::vector<size_t> received;
+
+	transformation_counter(size_t inouts = 1) : flow::node("transformation_counter"), flow::transformer<T, T>("transformation_counter", inouts, inouts), received(inouts, 0)
+	{
+		int i = 22;
+	}
+
+	~transformation_counter()
+	{
+		int i = 22;
+	}
+
+	virtual void ready(size_t i)
+	{
+		flow::producer<T>::output(i).push(std::move(flow::consumer<T>::input(i).pop()));
+		++received[i];
+	}
+};
+
+template<typename T>
 class consumption_counter : public flow::consumer<T>
 {
 public:

@@ -60,22 +60,25 @@ bool graph_dummy_nodes_connected()
 bool just_one()
 {
 	auto sp_pn = make_shared<produce_n<int>>(1);
+	auto sp_tc = make_shared<transformation_counter<int>>();
 	auto sp_cc = make_shared<consumption_counter<int>>();
 
 	{
 		flow::graph g;
 
 		g.add(sp_pn);
+		g.add(sp_tc);
 		g.add(sp_cc);
 
-		g.connect<int>(sp_pn, 0, sp_cc, 0);
+		g.connect<int>(sp_pn, 0, sp_tc, 0);
+		g.connect<int>(sp_tc, 0, sp_cc, 0);
 
 		g.start();
 
 		this_thread::sleep_for(chrono::seconds(1));
 	}
 
-	return sp_cc->received[0] == 1;
+	return sp_tc->received[0] == 1 && sp_cc->received[0] == 1;
 }
 
 int main(int argc, char* argv[])
