@@ -346,7 +346,7 @@ public:
 	//!\brief Returns a reference to an outpin pin.
 	//!
 	//!\param n The index of the output pin.
-	virtual outpin<T>& output(const int n) { return d_outputs[n]; }
+	virtual outpin<T>& output(const size_t n) { return d_outputs[n]; }
 
 	//!\brief Disconnect all pins.
 	virtual void sever()
@@ -420,7 +420,7 @@ public:
 	//!\brief Returns a reference to an input pin.
 	//!
 	//!\param n The index of the input pin.
-	virtual inpin<T>& input(const int n) { return d_inputs[n]; }
+	virtual inpin<T>& input(const size_t n) { return d_inputs[n]; }
 
 	//!\brief Disconnect all pins.
 	virtual void sever()
