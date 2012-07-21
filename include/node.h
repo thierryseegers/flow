@@ -363,8 +363,6 @@ public:
 	//! Nodes that are pure producers should use this function as their execution function.
 	virtual void operator()()
 	{
-		start();
-
 		state_t s(state());
 
 		while(s != stopped)
@@ -451,8 +449,6 @@ public:
 	//! Nodes that are consumers should use this function as their execution function.
 	virtual void operator()()
 	{
-		start();
-
 		state_t s(state());
 		
 		while(s != stopped)
