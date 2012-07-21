@@ -65,12 +65,21 @@ class monotonous_timer : public timer
 {
 	std::chrono::milliseconds d_interval;
 
+	lwsync::monitor<bool> d_awaken_m;
+
 public:
 	//!\param interval The time to wait between notifications. Must be a duration typedef from <chrono>.
 	template<typename Duration>
 	monotonous_timer(const Duration& interval) : d_interval(std::chrono::duration_cast<std::chrono::milliseconds>(interval)) {}
 
 	virtual ~monotonous_timer() {}
+
+	virtual void stop()
+	{
+		timer::stop();
+
+		*d_awaken_m.access() = true;
+	}
 
 	//!\brief Implementation of timer::operator()().
 	virtual void operator()()
@@ -82,9 +91,19 @@ public:
 				std::for_each(listeners_a->begin(), listeners_a->end(), std::mem_fun_ref(&std::function<void ()>::operator()));
 			}
 			
-			// TODO: wait until time has expired OR timer is stopped.
-			std::this_thread::sleep_for(d_interval);
+			std::thread(std::mem_fun(&monotonous_timer::sleep), this).detach();
+
+			// Wait until time has expired OR timer is stopped.
+			*d_awaken_m.wait() = false;
 		}
+	}
+
+private:
+	virtual void sleep()
+	{
+		std::this_thread::sleep_for(d_interval);
+
+		*d_awaken_m.access() = true;
 	}
 };
 
