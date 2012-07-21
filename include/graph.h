@@ -38,9 +38,9 @@ public:
 		stop();
 	}
 
-	//!\brief Adds a consumer node to the graph.
+	//!\brief Adds a node to the graph.
 	//!
-	//! The node will be disconnected.
+	//! The node will initially be disconnected and stopped.
 	virtual void add(std::shared_ptr<node> node_p)
 	{
 		if(std::dynamic_pointer_cast<detail::transformer>(node_p))
@@ -60,6 +60,8 @@ public:
 	//!\brief Removes a node from the graph.
 	//!
 	//!\param name_r The name of the node to remove.
+	//!
+	//!\return Node that was removed.
 	virtual std::shared_ptr<node> remove(const std::string& name_r)
 	{
 		std::shared_ptr<node> p;
@@ -76,24 +78,58 @@ public:
 		return p;
 	}
 
+	//!\brief Removes a node from the graph.
+	//!
+	//!\param sp_node The name of the node to remove.
+	virtual void remove(const std::shared_ptr<node>& sp_node)
+	{
+		remove(sp_node->name());
+	}
+
 	//!\brief Connect two nodes from the graph together.
 	//!
-	//!\param sp_producer_r The producing node.
+	//!\param p_name_r Name of the producing node.
 	//!\param p_pin The index of the producing node's output pin to connect.
-	//!\param sp_consumer_r The consuming node.
+	//!\param c_name_r Name of the consuming node.
 	//!\param c_pin The index of the consuming node's input pin to connect.
+	//!
+	//!\return False if the nodes had not yet been added to the graph.
 	template<typename T>
-	bool connect(std::shared_ptr<flow::producer<T>> sp_producer_r, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_consumer_r, const size_t c_pin)
+	bool connect(const std::string& p_name_r, const size_t p_pin, const std::string& c_name_r, const size_t c_pin)
 	{
-		nodes_t::iterator i;
+		nodes_t::iterator p, c;
 		
 		// Confirm these two nodes are in the graph.
-		if(!find(sp_producer_r->name(), i) || !find(sp_consumer_r->name(), i))
+		if(!find(p_name_r, p) || !find(c_name_r, c))
 		{
 			return false;
 		}
 		
-		sp_producer_r->connect(p_pin, sp_consumer_r.get(), c_pin);
+		std::dynamic_pointer_cast<producer<T>>(p->second)->connect(p_pin, std::dynamic_pointer_cast<consumer<T>>(c->second).get(), c_pin);
+
+		return true;
+	}
+
+	//!\brief Connect two nodes from the graph together.
+	//!
+	//!\param sp_p The producing node.
+	//!\param p_pin The index of the producing node's output pin to connect.
+	//!\param sp_c The consuming node.
+	//!\param c_pin The index of the consuming node's input pin to connect.
+	//!
+	//!\return False if the nodes had not yet been added to the graph.
+	template<typename T>
+	bool connect(std::shared_ptr<flow::producer<T>> sp_p, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_c, const size_t c_pin)
+	{
+		nodes_t::iterator i;
+		
+		// Confirm these two nodes are in the graph.
+		if(!find(sp_p->name(), i) || !find(sp_c->name(), i))
+		{
+			return false;
+		}
+		
+		sp_p->connect(p_pin, sp_c.get(), c_pin);
 
 		return true;
 	}
@@ -118,9 +154,9 @@ public:
 			}
 		};
 
-		std::for_each(d_consumers.begin(), d_consumers.end(), start_f);
-		std::for_each(d_transformers.begin(), d_transformers.end(), start_f);
-		std::for_each(d_producers.begin(), d_producers.end(), start_f);
+		for(auto& i : d_consumers){ start_f(i); }
+		for(auto& i : d_transformers){ start_f(i); }
+		for(auto& i : d_producers){ start_f(i); }
 	}
 
 	//!\brief Pauses all nodes in the graph.
@@ -133,9 +169,9 @@ public:
 			i.second->pause();
 		};
 
-		std::for_each(d_producers.begin(), d_producers.end(), pause_f);
-		std::for_each(d_transformers.begin(), d_transformers.end(), pause_f);
-		std::for_each(d_consumers.begin(), d_consumers.end(), pause_f);
+		for(auto& i : d_producers){ pause_f(i); }
+		for(auto& i : d_transformers){ pause_f(i); }
+		for(auto& i : d_consumers){ pause_f(i); }
 	}
 
 	//!\brief Stops all nodes in the graph.
@@ -157,9 +193,9 @@ public:
 			}
 		};
 
-		std::for_each(d_producers.begin(), d_producers.end(), stop_f);
-		std::for_each(d_transformers.begin(), d_transformers.end(), stop_f);
-		std::for_each(d_consumers.begin(), d_consumers.end(), stop_f);
+		for(auto& i : d_producers){ stop_f(i); }
+		for(auto& i : d_transformers){ stop_f(i); }
+		for(auto& i : d_consumers){ stop_f(i); }
 	}
 
 private:

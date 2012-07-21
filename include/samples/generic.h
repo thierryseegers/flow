@@ -65,7 +65,7 @@ public:
 	{
 		*d_awaken_m.wait() = false;
 
-		if(*producer<T>::d_state_m.const_access() != stop_requested)
+		if(node::state() == started)
 		{
 			std::unique_ptr<packet<T>> packet_p(new packet<T>(d_gen_f()));
 
@@ -79,8 +79,6 @@ template<typename T>
 class ostreamer : public consumer<T>
 {
 	std::ostream& d_o_r;
-
-	std::thread d_sleep_t;
 
 	lwsync::monitor<bool> d_awaken_m;
 
@@ -112,7 +110,7 @@ public:
 	{
 		std::unique_ptr<packet<T>> packet_p;
 
-		while((packet_p = consumer<T>::input(0).pop()) && (*consumer<T>::d_state_m.const_access() != stop_requested))
+		while((packet_p = consumer<T>::input(0).pop()) && (node::state() == started))
 		{
 			if(packet_p->consumption_time() == typename packet<T>::time_point_type())
 			{
@@ -123,12 +121,12 @@ public:
 			{
 				// This packet must be consumed at a set time.
 				// Create a thread that sleeps the required delay and rings the alarm.
-				d_sleep_t = std::thread(std::mem_fun(&ostreamer::sleep), this, packet_p->consumption_time());
+				std::thread(std::mem_fun(&ostreamer::sleep), this, packet_p->consumption_time()).detach();
 
 				// Wait until the sleep thread is done or stop was requested.
 				*d_awaken_m.wait() = false;
 
-				if(*consumer<T>::d_state_m.const_access() != stop_requested)
+				if(node::state() == started)
 				{
 					d_o_r << packet_p->data() << std::endl;
 				}
