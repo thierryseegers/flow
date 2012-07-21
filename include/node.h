@@ -34,19 +34,16 @@ class producer;
 
 class graph;
 
-//!\enum flow::state
+//!\enum flow::state_t
 //!
 //! The state of a node.
 //! State is never set directly.
 //! Transitions from a state to another is requested from the node.
-enum state
+enum state_t
 {
-	start_requested,	//!< The node has been requested to transition to the started state.
 	started,			//!< The node is in the started state.
-	incoming,			//!< This state is used by a producing node to indicate to its connected consuming node that a packet was put in the pipe.
-	pause_requested,	//!< The node has been requested to transition to the paused state.
 	paused,				//!< The node is in the paused state.
-	stop_requested,		//!< The node has been requested to stop execution and return from its thread.
+	stopped				//!< The node is in the stopped state.
 };
 
 //!\brief Base class for a node's inlet or outlet.
@@ -85,7 +82,7 @@ public:
 template<typename T>
 class inpin : public pin<T>
 {
-	lwsync::monitor<state> &d_state_m_r;
+	lwsync::monitor<state_t> &d_state_m_r;
 
 	using pin<T>::d_pipe_cr_sp;
 
@@ -96,7 +93,7 @@ public:
 	//!
 	//!\param name_r The name to give this node.
 	//!\param state_m_r Reference to the node's state monitor.
-	inpin(const std::string& name_r, lwsync::monitor<state>& state_m_r) : pin<T>(name_r), d_state_m_r(state_m_r) {}
+	inpin(const std::string& name_r, lwsync::monitor<state_t>& state_m_r) : pin<T>(name_r), d_state_m_r(state_m_r) {}
 
 	//!\brief Copy constructor.
 	//!
@@ -129,14 +126,10 @@ public:
 	//!\brief Notifies this pin that a packet has been queued to the pipe.
 	//!
 	//! When a producing node has moved a packet to the pipe, that node's outpin will call this function on the connected inpin.
-	//! If this inpin's owning node state is flow::started, it sets the state to flow::incoming to signal the node there is a packet to be consumed.
+	//! If this inpin's owning node state is flow::started, it touches the state signal the node there is a packet to be consumed.
 	virtual void incoming()
 	{
-		auto state_m_a = d_state_m_r.access();
-		if(*state_m_a == started)
-		{
-			*state_m_a = flow::incoming;
-		}
+		d_state_m_r.touch();
 	}
 };
 
@@ -234,7 +227,7 @@ public:
 class node : public named
 {
 protected:
-	lwsync::monitor<state> d_state_m; //!< The state of this node.
+	lwsync::monitor<state_t> d_state_m; //!< The state of this node.
 
 public:
 	//!\param name_r The name to give this node.
@@ -247,29 +240,31 @@ public:
 	
 	virtual ~node() {}
 
-	//!\brief Sets this node's state to flow::start_requested.
-	//!
-	//! The later transition from flow::start_requested to flow::started may not be immediate.
+	//!\brief Returns the node's state
+	virtual state_t state() const
+	{
+		return *d_state_m.const_access();
+	}
+
+	//!\brief Sets this node's state to flow::started.
 	virtual void start()
 	{
-		*d_state_m.access() = start_requested;
+		*d_state_m.access() = started;
 	}
 
-	//!\brief Sets this node's state to flow::pause_requested.
-	//!
-	//! The later transition from flow::pause_requested to flow::paused may not be immediate.
+	//!\brief Sets this node's state to flow::paused.
 	virtual void pause()
 	{
-		*d_state_m.access() = pause_requested;
+		*d_state_m.access() = paused;
 	}
 
-	//!\brief Sets this node's state to flow::stop_requested.
+	//!\brief Sets this node's state to flow::stopped.
 	//!
 	//! Requests the node to exit from its execution loop.
 	//! This may not be immediate.
 	virtual void stop()
 	{
-		*d_state_m.access() = stop_requested;
+		*d_state_m.access() = stopped;
 	}
 
 	//!\brief Disconnect all pins.
@@ -368,30 +363,19 @@ public:
 	//! Nodes that are pure producers should use this function as their execution function.
 	virtual void operator()()
 	{
-		state s;
-		
-		{ s = *d_state_m.access() = started; }
+		start();
 
-		while(s != stop_requested)
+		state_t s(state());
+
+		while(s != stopped)
 		{
+			if(s == paused)
 			{
-				if(s == paused)
-				{
-					s = *d_state_m.wait_for([](const state& state_r){ return state_r == start_requested || state_r == stop_requested; });
-				}
-				else
-				{
-					s  = *d_state_m.const_access();
-				}
-
-				if(s == pause_requested)
-				{
-					s = *d_state_m.access() = paused;
-				}
-				else if(s == start_requested)
-				{
-					s = *d_state_m.access() = started;
-				}
+				s = *d_state_m.const_wait_for([](const state_t& state_r){ return state_r != paused; });
+			}
+			else
+			{
+				s = state();
 			}
 
 			if(s == started)
@@ -446,6 +430,20 @@ public:
 			in_r.disconnect();
 		}
 	}
+	
+	//!\brief Tests whether there are any packets at any of the inpins.
+	virtual bool incoming()
+	{
+		for(size_t i = 0; i != ins(); ++i)
+		{
+			if(input(i).peek())
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	//!\brief The node's execution function.
 	//!
@@ -453,41 +451,24 @@ public:
 	//! Nodes that are consumers should use this function as their execution function.
 	virtual void operator()()
 	{
-		state s;
+		start();
+
+		state_t s(state());
 		
-		{ s = *d_state_m.access() = started; }
-
-		while(s != stop_requested)
+		while(s != stopped)
 		{
-			{
-				if(s == paused)
-				{
-					s = *d_state_m.wait_for([](const state& state_r){ return state_r == start_requested || state_r == stop_requested; });
-				}
-				else if(s == started)
-				{
-					s = *d_state_m.wait_for([](const state& state_r){ return state_r != started; });
-				}
-				else
-				{
-					s  = *d_state_m.const_access();
-				}
+			bool p = false;
 
-				if(s == pause_requested)
-				{
-					s = *d_state_m.access() = paused;
-				}
-				else if(s == start_requested)
-				{
-					s = *d_state_m.access() = started;
-				}
-				else if(s == incoming)
-				{
-					*d_state_m.access() = started;
-				}
+			if(s == paused)
+			{
+				s = *d_state_m.const_wait_for([](const state_t& state_r){ return state_r != paused; });
+			}
+			else if(s == started)
+			{
+				s = *d_state_m.const_wait_for([this, &p](const state_t& state_r){ return state_r != started || (p = this->incoming()); });
 			}
 
-			if(s == incoming)
+			if(p)
 			{
 				for(size_t i = 0; i != ins(); ++i)
 				{
