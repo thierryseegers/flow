@@ -1,8 +1,12 @@
+#include "counted.h"
 #include "dummies.h"
 
 #include "flow.h"
 
+#include <cstring>
+#include <iostream>
 #include <memory>
+#include <thread>
 
 using namespace std;
 
@@ -53,6 +57,27 @@ bool graph_dummy_nodes_connected()
 	return true;
 }
 
+bool just_one()
+{
+	auto sp_pn = make_shared<produce_n<int>>(1);
+	auto sp_cc = make_shared<consumption_counter<int>>();
+
+	{
+		flow::graph g;
+
+		g.add(sp_pn);
+		g.add(sp_cc);
+
+		g.connect<int>(sp_pn, 0, sp_cc, 0);
+
+		g.start();
+
+		this_thread::sleep_for(chrono::seconds(1));
+	}
+
+	return sp_cc->received[0] == 1;
+}
+
 int main(int argc, char* argv[])
 {
 	bool b = true;
@@ -68,6 +93,10 @@ int main(int argc, char* argv[])
 	else if(strcmp(argv[1], "graph_dummy_nodes_connected") == 0)
 	{
 		b = graph_dummy_nodes_connected();
+	}
+	else if(strcmp(argv[1], "just_one") == 0)
+	{
+		b = just_one();
 	}
 
 	return b ? 0 : 1;
