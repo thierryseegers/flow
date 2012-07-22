@@ -62,11 +62,6 @@ public:
 	//!\param name_r The name of this pin. This will be typically generated from the name of the owning node.
 	pin(const std::string& name_r) : named(name_r) {}
 
-	//!\brief Copy constructor.
-	//!
-	//!\param pin_r The pin to copy from.
-	pin(const pin<T>& pin_r) : named(pin_r) {}
-
 	virtual ~pin() {}
 
 	//!\brief Disconnects this pin from its pipe.
@@ -182,11 +177,6 @@ class outpin : public pin<T>
 public:
 	//!\param name_r The name to give this outpin.
 	outpin(const std::string& name_r) : pin<T>(name_r) {}
-
-	//!\brief Copy constructor.
-	//!
-	//!\param outpin_r The inpin to copy from.
-	outpin(const outpin<T>& outpin_r) : pin<T>(outpin_r) {}
 
 	virtual ~outpin() {}
 
