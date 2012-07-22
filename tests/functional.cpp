@@ -5,23 +5,41 @@
 
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <string>
 #include <thread>
 
 using namespace std;
 
-bool empty_graph()
+typedef map<string, string> args_t;
+
+args_t make_args(const char* types[], char* values[], int c)
+{
+	args_t args;
+
+	while(c)
+	{
+		--c;
+
+		args[types[c]] = values[c];
+	}
+
+	return args;
+}
+
+bool empty(args_t args)
 {
 	{
 		flow::graph g;
 
-		g.start();
+		if(args["start"] == "start") g.start();
 	}
 
 	return true;
 }
 
-bool graph_dummy_nodes_unconnected()
+bool unconnected(args_t args)
 {
 	{
 		flow::graph g;
@@ -30,13 +48,13 @@ bool graph_dummy_nodes_unconnected()
 		g.add(make_shared<dummy_transformer<int, int>>());
 		g.add(make_shared<dummy_consumer<int>>());
 
-		g.start();
+		if(args["start"] == "start") g.start();
 	}
 
 	return true;
 }
 
-bool graph_dummy_nodes_connected()
+bool connected(args_t args)
 {
 	{
 		flow::graph g;
@@ -51,15 +69,17 @@ bool graph_dummy_nodes_connected()
 		g.connect<int>(sp_dp, 0, sp_dt, 0);
 		g.connect<int>(sp_dt, 0, sp_dc, 0);
 
-		g.start();
+		if(args["start"] == "start") g.start();
 	}
 
 	return true;
 }
 
-bool just_one()
+bool count(args_t args)
 {
-	auto sp_pn = make_shared<produce_n<int>>(1);
+	size_t n = stoul(args["count"]);
+
+	auto sp_pn = make_shared<produce_n<int>>(n);
 	auto sp_tc = make_shared<transformation_counter<int>>();
 	auto sp_cc = make_shared<consumption_counter<int>>();
 
@@ -78,28 +98,32 @@ bool just_one()
 		this_thread::sleep_for(chrono::seconds(1));
 	}
 
-	return sp_tc->received[0] == 1 && sp_cc->received[0] == 1;
+	return sp_tc->received[0] == n && sp_cc->received[0] == n;
 }
 
 int main(int argc, char* argv[])
 {
-	bool b = true;
+	bool b = false;
 
-	if(strcmp(argv[1], "empty_graph") == 0)
+	if(strcmp(argv[1], "empty") == 0)
 	{
-		b = empty_graph();
+		const char* types[] = { "start" };
+		b = empty(make_args(types, &argv[2], argc - 2));
 	}
-	else if(strcmp(argv[1], "graph_dummy_nodes_unconnected") == 0)
+	else if(strcmp(argv[1], "unconnected") == 0)
 	{
-		b = graph_dummy_nodes_unconnected();
+		const char* types[] = { "start" };
+		b = unconnected(make_args(types, &argv[2], argc - 2));
 	}
-	else if(strcmp(argv[1], "graph_dummy_nodes_connected") == 0)
+	else if(strcmp(argv[1], "connected") == 0)
 	{
-		b = graph_dummy_nodes_connected();
+		const char* types[] = { "start" };
+		b = connected(make_args(types, &argv[2], argc - 2));
 	}
-	else if(strcmp(argv[1], "just_one") == 0)
+	else if(strcmp(argv[1], "count") == 0)
 	{
-		b = just_one();
+		const char* types[] = { "count" };
+		b = count(make_args(types, &argv[2], argc - 2));
 	}
 
 	return b ? 0 : 1;

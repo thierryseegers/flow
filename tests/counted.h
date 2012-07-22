@@ -1,5 +1,5 @@
-#if !defined(FUNCTIONAL_ONCES_H)
-	 #define FUNCTIONAL_ONCES_H
+#if !defined(TESTS_COUNTED_H)
+	 #define TESTS_COUNTED_H
 
 #include "node.h"
 

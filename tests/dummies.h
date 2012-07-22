@@ -1,5 +1,5 @@
-#if !defined(FUNCTIONAL_DUMMIES_H)
-	 #define FUNCTIONAL_DUMMIES_H
+#if !defined(TESTS_DUMMIES_H)
+	 #define TESTS_DUMMIES_H
 
 #include "node.h"
 
