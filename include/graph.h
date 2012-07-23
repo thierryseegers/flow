@@ -138,19 +138,16 @@ public:
 	//!
 	//! To avoid packet build-up in pipes, pure consuming node are started first, transforming nodes second and pure producing nodes last.
 	//! If a node is new to the graph, a thread is created for it.
-	//! If a node was already present and had previously been started, node::start() is called.
 	virtual void start()
 	{
 		auto start_f = [this](nodes_t::value_type& i)
 		{
+			i.second->start();
+
 			if(d_threads.find(i.first) == d_threads.end())
 			{
 //				d_threads[i.first] = std::unique_ptr<std::thread>(new std::thread(std::ref(*i.second)));
 				d_threads[i.first] = std::unique_ptr<std::thread>(new std::thread([i]{ i.second->operator()(); }));	//!\todo Remove this workaround for bug in VC++11 (bug #734305) when possible.
-			}
-			else
-			{
-				i.second->start();
 			}
 		};
 

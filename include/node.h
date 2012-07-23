@@ -62,11 +62,6 @@ public:
 	//!\param name_r The name of this pin. This will be typically generated from the name of the owning node.
 	pin(const std::string& name_r) : named(name_r) {}
 
-	//!\brief Copy constructor.
-	//!
-	//!\param pin_r The pin to copy from.
-	pin(const pin<T>& pin_r) : named(pin_r) {}
-
 	virtual ~pin() {}
 
 	//!\brief Disconnects this pin from its pipe.
@@ -82,7 +77,7 @@ public:
 template<typename T>
 class inpin : public pin<T>
 {
-	lwsync::monitor<state_t> &d_state_m_r;
+	lwsync::monitor<state_t> *d_state_m_r;
 
 	using pin<T>::d_pipe_cr_sp;
 
@@ -93,12 +88,7 @@ public:
 	//!
 	//!\param name_r The name to give this node.
 	//!\param state_m_r Reference to the node's state monitor.
-	inpin(const std::string& name_r, lwsync::monitor<state_t>& state_m_r) : pin<T>(name_r), d_state_m_r(state_m_r) {}
-
-	//!\brief Copy constructor.
-	//!
-	//!\param inpin_r The inpin to copy from.
-	inpin(const inpin<T>& inpin_r) : pin<T>(inpin_r), d_state_m_r(inpin_r.d_state_m_r) {}
+	inpin(const std::string& name_r, lwsync::monitor<state_t>* state_m_r) : pin<T>(name_r), d_state_m_r(state_m_r) {}
 
 	virtual ~inpin() {}
 
@@ -129,7 +119,7 @@ public:
 	//! If this inpin's owning node state is flow::started, it touches the state signal the node there is a packet to be consumed.
 	virtual void incoming()
 	{
-		d_state_m_r.touch();
+		d_state_m_r->touch();
 	}
 };
 
@@ -187,11 +177,6 @@ class outpin : public pin<T>
 public:
 	//!\param name_r The name to give this outpin.
 	outpin(const std::string& name_r) : pin<T>(name_r) {}
-
-	//!\brief Copy constructor.
-	//!
-	//!\param outpin_r The inpin to copy from.
-	outpin(const outpin<T>& outpin_r) : pin<T>(outpin_r) {}
 
 	virtual ~outpin() {}
 
@@ -346,7 +331,7 @@ public:
 	//!\brief Returns a reference to an outpin pin.
 	//!
 	//!\param n The index of the output pin.
-	virtual outpin<T>& output(const int n) { return d_outputs[n]; }
+	virtual outpin<T>& output(const size_t n) { return d_outputs[n]; }
 
 	//!\brief Disconnect all pins.
 	virtual void sever()
@@ -363,8 +348,6 @@ public:
 	//! Nodes that are pure producers should use this function as their execution function.
 	virtual void operator()()
 	{
-		start();
-
 		state_t s(state());
 
 		while(s != stopped)
@@ -408,7 +391,7 @@ public:
 	{
 		for(size_t i = 0; i != ins; ++i)
 		{
-			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), d_state_m));
+			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), &d_state_m));
 		}
 	}
 
@@ -420,7 +403,7 @@ public:
 	//!\brief Returns a reference to an input pin.
 	//!
 	//!\param n The index of the input pin.
-	virtual inpin<T>& input(const int n) { return d_inputs[n]; }
+	virtual inpin<T>& input(const size_t n) { return d_inputs[n]; }
 
 	//!\brief Disconnect all pins.
 	virtual void sever()
@@ -451,8 +434,6 @@ public:
 	//! Nodes that are consumers should use this function as their execution function.
 	virtual void operator()()
 	{
-		start();
-
 		state_t s(state());
 		
 		while(s != stopped)
