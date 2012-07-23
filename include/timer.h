@@ -4,7 +4,9 @@
 #include <lwsync/critical_resource.hpp>
 
 #include <chrono>
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -65,7 +67,8 @@ class monotonous_timer : public timer
 {
 	std::chrono::milliseconds d_interval;
 
-	lwsync::monitor<bool> d_awaken_m;
+	std::condition_variable d_stopped_cv;
+	std::mutex d_stopped_m;
 
 public:
 	//!\param interval The time to wait between notifications. Must be a duration typedef from <chrono>.
@@ -78,7 +81,7 @@ public:
 	{
 		timer::stop();
 
-		*d_awaken_m.access() = true;
+		d_stopped_cv.notify_one();
 	}
 
 	//!\brief Implementation of timer::operator()().
@@ -94,19 +97,10 @@ public:
 				}
 			}
 			
-			std::thread(std::mem_fun(&monotonous_timer::sleep), this).detach();
-
 			// Wait until time has expired OR timer is stopped.
-			*d_awaken_m.wait() = false;
+			std::unique_lock<std::mutex> l_stopped(d_stopped_m);
+			d_stopped_cv.wait_for(l_stopped, d_interval);
 		}
-	}
-
-private:
-	virtual void sleep()
-	{
-		std::this_thread::sleep_for(d_interval);
-
-		*d_awaken_m.access() = true;
 	}
 };
 

@@ -7,8 +7,10 @@
 #include <lwsync/monitor.hpp>
 
 #include <chrono>
+#include <condition_variable>
 #include <functional>
 #include <iostream>
+#include <mutex>
 #include <thread>
 
 //!\file generic.h
@@ -80,14 +82,15 @@ class ostreamer : public consumer<T>
 {
 	std::ostream& d_o_r;
 
-	lwsync::monitor<bool> d_awaken_m;
+	std::condition_variable d_stopped_cv;
+	std::mutex d_stopped_m;
 
 public:
 	//! This consumer has only one input.
 	//!
 	//!\param o_r Reference to the output stream.
 	//!\param name_r The name to give this node.
-	ostreamer(std::ostream& o_r, const std::string& name_r = "ostreamer") : node(name_r), consumer<T>(name_r, 1), d_o_r(o_r), d_awaken_m(false) {}
+	ostreamer(std::ostream& o_r, const std::string& name_r = "ostreamer") : node(name_r), consumer<T>(name_r, 1), d_o_r(o_r) {}
 
 	virtual ~ostreamer() {}
 
@@ -96,7 +99,7 @@ public:
 	{
 		consumer<T>::stop();
 
-		*d_awaken_m.access() = true;
+		d_stopped_cv.notify_one();
 	}
 
 	//!\brief Implementation of consumer::ready()
@@ -120,11 +123,9 @@ public:
 			else if(packet_p->consumption_time() > std::chrono::high_resolution_clock::now())
 			{
 				// This packet must be consumed at a set time.
-				// Create a thread that sleeps the required delay and rings the alarm.
-				std::thread(std::mem_fun(&ostreamer::sleep), this, packet_p->consumption_time()).detach();
-
-				// Wait until the sleep thread is done or stop was requested.
-				*d_awaken_m.wait() = false;
+				// Wait until then or until this node is stopped.
+				std::unique_lock<std::mutex> l_stopped(d_stopped_m);
+				d_stopped_cv.wait_until(l_stopped, packet_p->consumption_time());
 
 				if(node::state() == started)
 				{
@@ -132,14 +133,6 @@ public:
 				}
 			}
 		}
-	}
-
-private:
-	virtual void sleep(const typename packet<T>::time_point_type& time_r)
-	{
-		std::this_thread::sleep_until(time_r);
-
-		*d_awaken_m.access() = true;
 	}
 };
 
