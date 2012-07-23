@@ -174,18 +174,16 @@ public:
 	//!\brief Stops all nodes in the graph.
 	//!
 	//! node::stop() is called on all nodes.
-	//!
-	//!\param join If true, threads are joined before they are destroyed.
-	virtual void stop(bool join = true)
+	virtual void stop()
 	{
-		auto stop_f = [this, join](nodes_t::value_type& i)
+		auto stop_f = [this](nodes_t::value_type& i)
 		{
 			i.second->stop();
 
 			graph::threads_t::iterator j = d_threads.find(i.first);
 			if(j != d_threads.end())
 			{
-				join ? j->second->join() : j->second->detach();
+				j->second->join();
 				d_threads.erase(j);
 			}
 		};
