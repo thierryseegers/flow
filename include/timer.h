@@ -54,7 +54,7 @@ public:
 		return d_listeners_cr;
 	}
 
-	//!\brief Execution function to be implemented be concrete timers.
+	//!\brief Execution function to be implemented by concrete timers.
 	//!
 	//! This function must return as soon as possible after the timer is stopped.
 	virtual void operator()() = 0;
@@ -87,8 +87,11 @@ public:
 		while(!stopped())
 		{
 			{
-				auto listeners_a = listeners().access();
-				std::for_each(listeners_a->begin(), listeners_a->end(), std::mem_fun_ref(&std::function<void ()>::operator()));
+				auto listeners_a = listeners().const_access();
+				for(auto& listener : *listeners_a)
+				{
+					listener();
+				}
 			}
 			
 			std::thread(std::mem_fun(&monotonous_timer::sleep), this).detach();
