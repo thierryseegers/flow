@@ -3,6 +3,7 @@
 
 #include <lwsync/critical_resource.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <functional>
@@ -20,26 +21,26 @@ namespace flow
 //!\brief Base class for an object that notifies listeners at some interval.
 class timer
 {
-	typedef lwsync::critical_resource<std::vector<std::function<void ()> > > listeners_cr_t;
+	typedef lwsync::critical_resource<std::vector<std::function<void ()>>> listeners_cr_t;
 	listeners_cr_t d_listeners_cr;
 
-	lwsync::critical_resource<bool> d_stop_cr;
+	std::atomic<bool> d_stop_a;
 
 public:
-	timer() : d_stop_cr(false) {}
+	timer() : d_stop_a(false) {}
 
 	virtual ~timer() {}
 
 	//!\brief Returns true if the timer is stopped.
 	virtual bool stopped() const
 	{
-		return *d_stop_cr.const_access();
+		return d_stop_a;
 	}
 
 	//!\brief Stop the timer.
 	virtual void stop()
 	{
-		*d_stop_cr.access() = true;
+		d_stop_a = true;
 	}
 
 	//!\brief Adds a listener to this timer.
