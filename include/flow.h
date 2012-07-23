@@ -98,7 +98,7 @@ This implementation:
   - \c \<thread\>
   - \c \<utility\>
  - depends on a thirdparty library, included in the source package. See \ref thirdparty.
- - has been tested with Visual Studio 2012 RC and GCC 4.7.0.
+ - has been tested with Visual Studio 2012 RC, GCC 4.6.3 and GCC 4.7.0.
  - uses <a href="http://www.cmake.org">CMake</a> to build examples.
  - uses <a href="http://www.stack.nl/~dimitri/doxygen/index.html">Doxygen</a> to generate its documentation (and, optionally, <a href="http://www.graphviz.org/">Graphviz's dot</a>).
 
