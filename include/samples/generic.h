@@ -104,33 +104,29 @@ public:
 
 	//!\brief Implementation of consumer::ready()
 	//!
-	//! If stop() has been called, it returns immediately.
 	//! If a packet has no consumption time specified, the packet is streamed immediately.
 	//! If a packet has a consumption time specified, and that time is:
 	//! - in the future: this function sleeps until that time to stream out, unless stop has been called since, then it exits.
 	//! - in the past: the packet is unused and lost.
 	virtual void ready(size_t)
 	{
-		std::unique_ptr<packet<T>> packet_p;
-
-		while((packet_p = consumer<T>::input(0).pop()) && (node::state() == started))
+		std::unique_ptr<packet<T>> packet_p = consumer<T>::input(0).pop();
+		
+		if(packet_p->consumption_time() == typename packet<T>::time_point_type())
 		{
-			if(packet_p->consumption_time() == typename packet<T>::time_point_type())
-			{
-				// This packet has no set consumption time. Consume it immediately.
-				d_o_r << packet_p->data() << std::endl;
-			}
-			else if(packet_p->consumption_time() > std::chrono::high_resolution_clock::now())
-			{
-				// This packet must be consumed at a set time.
-				// Wait until then or until this node is stopped.
-				std::unique_lock<std::mutex> l_stopped(d_stopped_m);
-				d_stopped_cv.wait_until(l_stopped, packet_p->consumption_time());
+			// This packet has no set consumption time. Consume it immediately.
+			d_o_r << packet_p->data() << std::endl;
+		}
+		else if(packet_p->consumption_time() > std::chrono::high_resolution_clock::now())
+		{
+			// This packet must be consumed at a set time.
+			// Wait until then or until this node is stopped.
+			std::unique_lock<std::mutex> l_stopped(d_stopped_m);
+			d_stopped_cv.wait_until(l_stopped, packet_p->consumption_time());
 
-				if(node::state() == started)
-				{
-					d_o_r << packet_p->data() << std::endl;
-				}
+			if(node::state() == started)
+			{
+				d_o_r << packet_p->data() << std::endl;
 			}
 		}
 	}
@@ -151,22 +147,18 @@ public:
 
 	//!\brief Implementation of consumer::ready().
 	//!
-	//! The original input packet is moved to the first output pipe.
-	//! It is also copied into the rest of the ouput pipes.
+	//! The original input packet is moved to the first output pipe after it is copied into the rest of the ouput pipes.
 	virtual void ready(size_t)
 	{
-		std::unique_ptr<packet<T>> packet_p;
-			
-		while(packet_p = consumer<T>::input(0).pop())
+		std::unique_ptr<packet<T>> packet_p = consumer<T>::input(0).pop();
+		
+		for(size_t s = 1; s != producer<T>::outs(); ++s)
 		{
-			for(auto& out : producer<T>::outs())
-			{
-				std::unique_ptr<packet<T>> copy_p(new packet<T>(*packet_p));
-				out.push(std::move(copy_p));
-			}
-
-			producer<T>::output(0).push(std::move(packet_p));
+			std::unique_ptr<packet<T>> copy_p(new packet<T>(*packet_p));
+			producer<T>::output(s).push(std::move(copy_p));
 		}
+
+		producer<T>::output(0).push(std::move(packet_p));
 	}
 };
 
@@ -189,21 +181,18 @@ public:
 	//! If a packet has no set consumption time, then its consumption is set to the time at which this node has received the packet plus the given delay.
 	virtual void ready(size_t)
 	{
-		std::unique_ptr<packet<T>> packet_p;
-
-		while(packet_p = consumer<T>::input(0).pop())
+		std::unique_ptr<packet<T>> packet_p = consumer<T>::input(0).pop();
+		
+		if(packet_p->consumption_time() == packet<T>::time_point_type())
 		{
-			if(packet_p->consumption_time() == packet<T>::time_point_type())
-			{
-				packet_p->consumption_time() = std::chrono::high_resolution_clock::now() + d_offset;
-			}
-			else
-			{
-				packet_p->consumption_time() += d_offset;
-			}
-
-			producer<T>::output(0).push(std::move(packet_p));
+			packet_p->consumption_time() = std::chrono::high_resolution_clock::now() + d_offset;
 		}
+		else
+		{
+			packet_p->consumption_time() += d_offset;
+		}
+
+		producer<T>::output(0).push(std::move(packet_p));
 	}
 };
 
