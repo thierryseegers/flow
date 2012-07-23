@@ -84,8 +84,6 @@ class inpin : public pin<T>
 public:
 	//!\brief Constructor that takes a name and a reference to the consuming node's state monitor.
 	//!
-	//! If the node's state is flow::started and a packet arrives, the node's state will be transitioned to flow::incoming.
-	//!
 	//!\param name_r The name to give this node.
 	//!\param state_m_r Reference to the node's state monitor.
 	inpin(const std::string& name_r, lwsync::monitor<state_t>* state_m_r) : pin<T>(name_r), d_state_m_r(state_m_r) {}
