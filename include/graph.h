@@ -4,7 +4,7 @@
 #include "named.h"
 #include "node.h"
 
-#include <algorithm>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -137,7 +137,7 @@ public:
 	//!\brief Starts all nodes in the graph.
 	//!
 	//! To avoid packet build-up in pipes, pure consuming node are started first, transforming nodes second and pure producing nodes last.
-	//! If a node is new to the graph, a thread is created for it.
+	//! If a node had been stopped earlier, a new thread is created for it.
 	virtual void start()
 	{
 		auto start_f = [this](nodes_t::value_type& i)
