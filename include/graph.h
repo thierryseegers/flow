@@ -40,9 +40,17 @@ public:
 
 	//!\brief Adds a node to the graph.
 	//!
-	//! The node will initially be disconnected and stopped.
-	virtual void add(std::shared_ptr<node> node_p)
+	//! The node will initially be disconnected and paused.
+	//!
+	//!\param node_p Pointer to the node to add.
+	//!\param name_r Optional. New name to give the node.
+	virtual void add(std::shared_ptr<node> node_p, const std::string& name_r = std::string())
 	{
+		if(!name_r.empty())
+		{
+			node_p->rename(name_r);
+		}
+
 		if(std::dynamic_pointer_cast<detail::transformer>(node_p))
 		{
 			d_transformers[node_p->name()] = node_p;
