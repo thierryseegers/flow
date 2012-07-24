@@ -1,12 +1,15 @@
 #include "counted.h"
 #include "dummies.h"
+#include "manual.h"
 
 #include "flow.h"
+#include "samples/generic.h"
 
 #include <cstring>
 #include <iostream>
 #include <map>
 #include <memory>
+#include <random>
 #include <string>
 #include <thread>
 
@@ -95,10 +98,53 @@ bool count(args_t args)
 
 		g.start();
 
-		this_thread::sleep_for(chrono::seconds(1));
+		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 
 	return sp_tc->received[0] == n && sp_cc->received[0] == n;
+}
+
+bool tee(args_t args)
+{
+	{
+		auto sp_pu = make_shared<pusher<int>>();
+		auto sp_t= make_shared<flow::samples::generic::tee<int>>();
+		auto sp_po1 = make_shared<popper<int>>();
+		auto sp_po2 = make_shared<popper<int>>();
+
+		flow::graph g;
+
+		g.add(sp_pu, "pusher_1");
+		g.add(sp_t);
+		g.add(sp_po1, "popper_1");
+		g.add(sp_po2, "popper_2");
+
+		g.connect<int>(sp_pu, 0, sp_t, 0);
+		g.connect<int>(sp_t, 0, sp_po1, 0);
+		g.connect<int>(sp_t, 1, sp_po2, 0);
+
+		g.start();
+
+		size_t c = stoul(args["count"]);
+		int n = 11;
+		while(c)
+		{
+			--c;
+
+			sp_pu->push(n);
+			
+			this_thread::sleep_for(chrono::milliseconds(100));
+
+			if(sp_po1->pop()->data() != n || sp_po2->pop()->data() != n)
+			{
+				return false;
+			}
+
+			n += n;
+		}
+	}
+
+	return true;
 }
 
 int main(int argc, char* argv[])
@@ -124,6 +170,11 @@ int main(int argc, char* argv[])
 	{
 		const char* types[] = { "count" };
 		b = count(make_args(types, &argv[2], argc - 2));
+	}
+	else if(strcmp(argv[1], "tee") == 0)
+	{
+		const char* types[] = { "count" };
+		b = tee(make_args(types, &argv[2], argc - 2));
 	}
 
 	return b ? 0 : 1;
