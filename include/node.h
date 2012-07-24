@@ -95,9 +95,7 @@ public:
 	//!\return false if the pipe is empty, true otherwise
 	virtual bool peek() const
 	{
-		if(!d_pipe_cr_sp) return false;
-
-		return d_pipe_cr_sp->const_access()->length() != 0;
+		return d_pipe_cr_sp ? d_pipe_cr_sp->const_access()->length() != 0 : false;
 	}
 
 	//!\brief Extracts a packet from the pipe.
@@ -105,10 +103,7 @@ public:
 	//!\return The next packet to be consumed if the inpin is connected to a pipe and the pipe is not empty, empty pointer otherwise.
 	virtual std::unique_ptr<packet<T>> pop()
 	{
-		if(!d_pipe_cr_sp) return std::unique_ptr<packet<T>>();
-
-		auto pipe_m_a = d_pipe_cr_sp->access();
-		return pipe_m_a->pop();
+		return d_pipe_cr_sp ? d_pipe_cr_sp->access()->pop() : std::unique_ptr<packet<T>>();
 	}
 
 	//!\brief Notifies this pin that a packet has been queued to the pipe.
