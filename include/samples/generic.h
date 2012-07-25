@@ -45,11 +45,9 @@ public:
 
 	virtual ~generator() {}
 
-	//!\brief implementation of node::stop().
-	virtual void stop()
+	//!\brief implementation of node::stopped().
+	virtual void stopped()
 	{
-		producer<T>::stop();
-
 		*d_awaken_m.access() = true;
 	}
 
@@ -61,13 +59,13 @@ public:
 
 	//!\brief Implementation of producer::produce().
 	//!
-	//! This function waits until stop has been requested or the timer has fired.
+	//! This function waits until the node is stopped or the timer has fired.
 	//! When the timer fires, the generator functor is called and its return value is moved to the pipe.
 	virtual void produce()
 	{
 		*d_awaken_m.wait() = false;
 
-		if(node::state() == started)
+		if(node::state() == state::started)
 		{
 			std::unique_ptr<packet<T>> packet_p(new packet<T>(d_gen_f()));
 
@@ -94,11 +92,9 @@ public:
 
 	virtual ~ostreamer() {}
 
-	//!\brief Implementation of node::stop().
-	virtual void stop()
+	//!\brief Implementation of node::stopped().
+	virtual void stopped()
 	{
-		consumer<T>::stop();
-
 		d_stopped_cv.notify_one();
 	}
 
@@ -106,7 +102,7 @@ public:
 	//!
 	//! If a packet has no consumption time specified, the packet is streamed immediately.
 	//! If a packet has a consumption time specified, and that time is:
-	//! - in the future: this function sleeps until that time to stream out, unless stop has been called since, then it exits.
+	//! - in the future: this function sleeps until that time to stream it out or sleeps until the node was stopped.
 	//! - in the past: the packet is unused and lost.
 	virtual void ready(size_t)
 	{
@@ -124,7 +120,7 @@ public:
 			std::unique_lock<std::mutex> l_stopped(d_stopped_m);
 			d_stopped_cv.wait_until(l_stopped, packet_p->consumption_time());
 
-			if(node::state() == started)
+			if(node::state() == state::started)
 			{
 				d_o_r << packet_p->data() << std::endl;
 			}

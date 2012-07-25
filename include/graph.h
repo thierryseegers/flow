@@ -150,7 +150,7 @@ public:
 	{
 		auto start_f = [this](nodes_t::value_type& i)
 		{
-			i.second->start();
+			i.second->transition(state::started);
 
 			if(d_threads.find(i.first) == d_threads.end())
 			{
@@ -171,7 +171,7 @@ public:
 	{
 		auto pause_f = [this](nodes_t::value_type& i)
 		{
-			i.second->pause();
+			i.second->transition(state::paused);
 		};
 
 		for(auto& i : d_producers){ pause_f(i); }
@@ -186,7 +186,7 @@ public:
 	{
 		auto stop_f = [this](nodes_t::value_type& i)
 		{
-			i.second->stop();
+			i.second->transition(state::stopped);
 
 			graph::threads_t::iterator j = d_threads.find(i.first);
 			if(j != d_threads.end())

@@ -6,10 +6,11 @@
 #include "pipe.h"
 
 #include <lwsync/critical_resource.hpp>
-#include <lwsync/monitor.hpp>
 
-#include <cassert>
+#include <atomic>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -34,18 +35,23 @@ class producer;
 
 class graph;
 
-//!\enum flow::state_t
+//!\namespace flow::state
 //!
-//! The state of a node.
-//! State is never set directly.
-//! Transitions from a state to another is requested from the node.
-enum state_t
+//!\brief Contains the different state values.
+namespace state
 {
-	started,			//!< The node is in the started state.
-	paused,				//!< The node is in the paused state.
-	stopped				//!< The node is in the stopped state.
+
+//!\enum type
+//!
+//!\brief The state of a node.
+enum type
+{
+	started,	//!< The node is in the started state.
+	paused,		//!< The node is in the paused state.
+	stopped		//!< The node is in the stopped state.
 };
 
+}
 //!\brief Base class for a node's inlet or outlet.
 //!
 //! Pins are connected to one another through pipes.
@@ -77,16 +83,16 @@ public:
 template<typename T>
 class inpin : public pin<T>
 {
-	lwsync::monitor<state_t> *d_state_m_r;
+	std::condition_variable *d_transition_cv_p;
 
 	using pin<T>::d_pipe_cr_sp;
 
 public:
-	//!\brief Constructor that takes a name and a reference to the consuming node's state monitor.
+	//!\brief Constructor.
 	//!
 	//!\param name_r The name to give this node.
-	//!\param state_m_r Reference to the node's state monitor.
-	inpin(const std::string& name_r, lwsync::monitor<state_t>* state_m_r) : pin<T>(name_r), d_state_m_r(state_m_r) {}
+	//!\param transition_cv_p Pointer to the node's transition condition_variable.
+	inpin(const std::string& name_r, std::condition_variable* transition_cv_p) : pin<T>(name_r), d_transition_cv_p(transition_cv_p) {}
 
 	virtual ~inpin() {}
 
@@ -112,7 +118,7 @@ public:
 	//! If this inpin's owning node state is flow::started, it touches the state signal the node there is a packet to be consumed.
 	virtual void incoming()
 	{
-		d_state_m_r->touch();
+		d_transition_cv_p->notify_one();
 	}
 };
 
@@ -205,53 +211,75 @@ public:
 class node : public named
 {
 protected:
-	lwsync::monitor<state_t> d_state_m; //!< The state of this node.
+	std::condition_variable d_transition_cv;	//!< The condition variable to monitor the node's state.
+	std::mutex d_transition_m;					//!< The mutex to lock when waiting on d_transition_cv.
+
+	//!\brief Disconnect all pins.
+	virtual void sever() = 0;
+
+private:
+	std::atomic<state::type> d_state_a; //!< The state of this node.
+
+	//!\brief Changes this node's state.
+	//!
+	//!\param s The new state.
+	virtual void transition(state::type s)
+	{
+		d_state_a = s;
+
+		// Notify the concrete class.
+		switch(s)
+		{
+		case state::started: started(); break;
+		case state::paused: paused(); break;
+		case state::stopped: stopped(); break;
+		default: break;
+		}
+
+		// Notify the execution loop.
+		d_transition_cv.notify_one();
+	}
+
+	friend class graph;
 
 public:
+	//! Constructor.
+	//!
 	//!\param name_r The name to give this node.
-	node(const std::string& name_r) : named(name_r), d_state_m(paused)
+	node(const std::string& name_r) : named(name_r), d_state_a(state::paused)
 	{}
 
 	//!\brief Move constructor.
-	node(node&& node_rr) : named(std::move(node_rr)), d_state_m(std::move(node_rr.d_state_m))
+	node(node&& node_rr) : named(std::move(node_rr)), d_state_a(node_rr.d_state_a.load())
 	{}
 	
 	virtual ~node() {}
 
 	//!\brief Returns the node's state
-	virtual state_t state() const
+	virtual state::type state() const
 	{
-		return *d_state_m.const_access();
+		return d_state_a;
 	}
-
-	//!\brief Sets this node's state to flow::started.
-	virtual void start()
-	{
-		*d_state_m.access() = started;
-	}
-
-	//!\brief Sets this node's state to flow::paused.
-	virtual void pause()
-	{
-		*d_state_m.access() = paused;
-	}
-
-	//!\brief Sets this node's state to flow::stopped.
+	
+	//!\brief Indicates the node has been started.
 	//!
-	//! Requests the node to exit from its execution loop.
-	//! This may not be immediate.
-	virtual void stop()
-	{
-		*d_state_m.access() = stopped;
-	}
+	//! Concrete nodes can override this function to be notified of the state transition.
+	virtual void started() {}
 
-	//!\brief Disconnect all pins.
-	virtual void sever() = 0;
+	//!\brief Indicates the node has been paused.
+	//!
+	//! Concrete nodes can override this function to be notified of the state transition.
+	virtual void paused() {}
+
+	//!\brief Indicates the node has been stopped.
+	//!
+	//! Concrete nodes can override this function to be notified of the state transition.
+	virtual void stopped() {}
 
 	//!\brief The node's execution function.
 	//!
-	//! This is the function that will be called to start execution.
-	//! After calling this function, the node's state will be flow::started.
+	//! When the node is started, this function is called.
+	//! It will exit when the node is stopped.
 	virtual void operator()() = 0;
 };
 
@@ -341,20 +369,21 @@ public:
 	//! Nodes that are pure producers should use this function as their execution function.
 	virtual void operator()()
 	{
-		state_t s(state());
+		state::type s(state());
 
-		while(s != stopped)
+		while(s != state::stopped)
 		{
-			if(s == paused)
+			if(s == state::paused)
 			{
-				s = *d_state_m.const_wait_for([](const state_t& state_r){ return state_r != paused; });
+				std::unique_lock<std::mutex> ul(d_transition_m);
+				d_transition_cv.wait(ul, [&s, this](){ return (s = this->state()) != state::paused; });
 			}
 			else
 			{
 				s = state();
 			}
 
-			if(s == started)
+			if(s == state::started)
 			{
 				produce();
 			}
@@ -384,7 +413,7 @@ public:
 	{
 		for(size_t i = 0; i != ins; ++i)
 		{
-			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), &d_state_m));
+			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), &d_transition_cv));
 		}
 	}
 
@@ -427,19 +456,21 @@ public:
 	//! Nodes that are consumers should use this function as their execution function.
 	virtual void operator()()
 	{
-		state_t s(state());
+		state::type s(state());
 		
-		while(s != stopped)
+		while(s != state::stopped)
 		{
 			bool p = false;
 
-			if(s == paused)
+			if(s == state::paused)
 			{
-				s = *d_state_m.const_wait_for([](const state_t& state_r){ return state_r != paused; });
+				std::unique_lock<std::mutex> ul(d_transition_m);
+				d_transition_cv.wait(ul, [&s, this](){ return (s = this->state()) != state::paused; });
 			}
-			else if(s == started)
+			else if(s == state::started)
 			{
-				s = *d_state_m.const_wait_for([this, &p](const state_t& state_r){ return state_r != started || (p = this->incoming()); });
+				std::unique_lock<std::mutex> ul(d_transition_m);
+				d_transition_cv.wait(ul, [&s, &p, this](){ return ((s = this->state()) != state::started) || (p = this->incoming()); });
 			}
 
 			if(p)
