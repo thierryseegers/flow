@@ -133,14 +133,54 @@ bool tee(args_t args)
 
 			sp_pu->push(n);
 			
-			this_thread::sleep_for(chrono::milliseconds(100));
-
 			if(sp_po1->pop()->data() != n || sp_po2->pop()->data() != n)
 			{
 				return false;
 			}
 
 			n += n;
+		}
+	}
+
+	return true;
+}
+
+bool add_delay(args_t args)
+{
+	{
+		auto sp_pu = make_shared<pusher<int>>();
+		auto sp_d= make_shared<flow::samples::generic::delay<int>>(chrono::seconds(1));
+		auto sp_po = make_shared<popper<int>>();
+	
+		flow::graph g;
+	
+		g.add(sp_pu, "pusher");
+		g.add(sp_d);
+		g.add(sp_po, "popper");
+
+		g.connect<int>(sp_pu, 0, sp_d, 0);
+		g.connect<int>(sp_d, 0, sp_po, 0);
+
+		g.start();
+
+		// Test with a prior set consumption time.
+		auto before = chrono::high_resolution_clock::now();
+		sp_pu->push(11, before);
+
+		auto after = sp_po->pop()->consumption_time();
+		if(after - before < chrono::seconds(1))
+		{
+			return false;
+		}
+
+		// Test with no prior set consumption time.
+		before = chrono::high_resolution_clock::now();
+		sp_pu->push(11);
+
+		after = sp_po->pop()->consumption_time();
+		if(after - before < chrono::seconds(1))
+		{
+			return false;
 		}
 	}
 
@@ -175,6 +215,11 @@ int main(int argc, char* argv[])
 	{
 		const char* types[] = { "count" };
 		b = tee(make_args(types, &argv[2], argc - 2));
+	}
+	else if(strcmp(argv[1], "add_delay") == 0)
+	{
+		const char* types[] = { "" };
+		b = add_delay(make_args(types, &argv[2], argc - 2));
 	}
 
 	return b ? 0 : 1;

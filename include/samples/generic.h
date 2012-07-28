@@ -179,7 +179,7 @@ public:
 	{
 		std::unique_ptr<packet<T>> packet_p = consumer<T>::input(0).pop();
 		
-		if(packet_p->consumption_time() == packet<T>::time_point_type())
+		if(packet_p->consumption_time() == typename packet<T>::time_point_type())
 		{
 			packet_p->consumption_time() = std::chrono::high_resolution_clock::now() + d_offset;
 		}
