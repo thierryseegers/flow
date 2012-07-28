@@ -101,7 +101,52 @@ bool count(args_t args)
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 
-	return sp_tc->received[0] == n && sp_cc->received[0] == n;
+	return sp_tc->count(0) == n && sp_cc->count(0) == n;
+}
+
+bool restart(args_t args)
+{
+	{
+		auto sp_pn = make_shared<produce_n<int>>(3);
+		auto sp_cc = make_shared<consumption_counter<int>>();
+	
+		flow::graph g;
+	
+		g.add(sp_pn);
+		g.add(sp_cc);
+
+		g.connect<int>(sp_pn, 0, sp_cc, 0);
+
+		size_t c = stoul(args["count"]);
+		++c;
+		while(c)
+		{
+			--c;
+
+			g.start();
+
+			this_thread::sleep_for(chrono::milliseconds(100));
+
+			if(args["halt"] == "pause")
+			{
+				g.pause();
+			}
+			else
+			{
+				g.stop();
+			}
+
+			if(sp_cc->count(0) != 3)
+			{
+				return false;
+			}
+
+			sp_pn->reset();
+			sp_cc->reset();
+		}
+	}
+
+	return true;
 }
 
 bool tee(args_t args)
@@ -210,6 +255,11 @@ int main(int argc, char* argv[])
 	{
 		const char* types[] = { "count" };
 		b = count(make_args(types, &argv[2], argc - 2));
+	}
+	else if(strcmp(argv[1], "restart") == 0)
+	{
+		const char* types[] = { "halt", "count" };
+		b = restart(make_args(types, &argv[2], argc - 2));
 	}
 	else if(strcmp(argv[1], "tee") == 0)
 	{
