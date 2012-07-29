@@ -7,7 +7,6 @@
 
 #include <lwsync/critical_resource.hpp>
 
-#include <atomic>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -84,6 +83,7 @@ template<typename T>
 class inpin : public pin<T>
 {
 	std::condition_variable *d_transition_cv_p;
+	std::mutex *d_transition_m_p;
 
 	using pin<T>::d_pipe_cr_sp;
 
@@ -92,14 +92,17 @@ public:
 	//!
 	//!\param name_r The name to give this node.
 	//!\param transition_cv_p Pointer to the node's transition condition_variable.
-	inpin(const std::string& name_r, std::condition_variable* transition_cv_p) : pin<T>(name_r), d_transition_cv_p(transition_cv_p) {}
+	//!\param transition_m_p Pointer to the node's transition mutex.
+	inpin(const std::string& name_r, std::condition_variable* transition_cv_p, std::mutex *transition_m_p)
+		: pin<T>(name_r), d_transition_cv_p(transition_cv_p), d_transition_m_p(transition_m_p)
+	{}
 
 	virtual ~inpin() {}
 
 	//!\brief Check whether a packet is in the pipe.
 	//!
-	//!\return false if the pipe is empty, true otherwise
-	virtual bool peek() const
+	//!\return \c false if there is no pipe or the pipe is empty, \c true otherwise.
+ 	virtual bool peek() const
 	{
 		return d_pipe_cr_sp ? d_pipe_cr_sp->const_access()->length() != 0 : false;
 	}
@@ -118,6 +121,7 @@ public:
 	//! If this inpin's owning node state is flow::started, it touches the state signal the node there is a packet to be consumed.
 	virtual void incoming()
 	{
+		std::unique_lock<std::mutex> ul(*d_transition_m_p);
 		d_transition_cv_p->notify_one();
 	}
 };
@@ -218,13 +222,15 @@ protected:
 	virtual void sever() = 0;
 
 private:
-	std::atomic<state::type> d_state_a; //!< The state of this node.
+	state::type d_state_a; //!< The state of this node.
 
 	//!\brief Changes this node's state.
 	//!
 	//!\param s The new state.
 	virtual void transition(state::type s)
 	{
+		std::unique_lock<std::mutex> ul(d_transition_m);
+
 		d_state_a = s;
 
 		// Notify the concrete class.
@@ -250,7 +256,7 @@ public:
 	{}
 
 	//!\brief Move constructor.
-	node(node&& node_rr) : named(std::move(node_rr)), d_state_a(node_rr.d_state_a.load())
+	node(node&& node_rr) : named(std::move(node_rr)), d_state_a(node_rr.d_state_a)
 	{}
 	
 	virtual ~node() {}
@@ -413,7 +419,7 @@ public:
 	{
 		for(size_t i = 0; i != ins; ++i)
 		{
-			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), &d_transition_cv));
+			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), &d_transition_cv, &d_transition_m));
 		}
 	}
 

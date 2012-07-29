@@ -155,7 +155,7 @@ public:
 			if(d_threads.find(i.first) == d_threads.end())
 			{
 //				d_threads[i.first] = std::unique_ptr<std::thread>(new std::thread(std::ref(*i.second)));
-				d_threads[i.first] = std::unique_ptr<std::thread>(new std::thread([i]{ i.second->operator()(); }));	//!\todo Remove this workaround for bug in VC++11 (bug #734305) when possible.
+				d_threads[i.first] = std::unique_ptr<std::thread>(new std::thread([&i]{ i.second->operator()(); }));	//!\todo Remove this workaround for bug in VC++11 (bug #734305) when possible.
 			}
 		};
 
