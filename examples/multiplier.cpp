@@ -89,16 +89,16 @@ int main()
 	auto generator = bind(uniform, ref(engine));
 
 	// Create three generators and add them to the graph.
-	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g1"));
-	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g2"));
-	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator, "g3"));
+	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator), "g1");
+	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator), "g2");
+	g.add(make_shared<flow::samples::generic::generator<int>>(mt, generator), "g3");
 	
 	// Include a multiplication_expressifier with three inputs.
 	// We specify its inputs to be ints, but its output will always be a string.
-	g.add(make_shared<multiplication_expressifier<int>>(3, "me1"));
+	g.add(make_shared<multiplication_expressifier<int>>(3), "me1");
 
 	// Include a consumer that just prints the data packets to cout.
-	g.add(make_shared<flow::samples::generic::ostreamer<string>>(cout, "o1"));
+	g.add(make_shared<flow::samples::generic::ostreamer<string>>(cout), "o1");
 
 	// Connect the three generators to the multiplication_expressifier.
 	g.connect<int>("g1", 0, "me1", 0);

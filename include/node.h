@@ -99,6 +99,25 @@ public:
 
 	virtual ~inpin() {}
 
+	//!\brief Overrides named::rename.
+	//!
+	//! Ensures pipe is also renamed.
+	//!
+	//!\param name_r New name to give this inpin.
+	virtual std::string rename(const std::string& name_r)
+	{
+		if(d_pipe_cr_sp)
+		{
+			auto pipe = d_pipe_cr_sp->access();
+			if(pipe->input())
+			{
+				pipe->rename(pipe->input()->name() + "_to_" + name_r);
+			}
+		}
+
+		return named::rename(name_r);
+	}
+
 	//!\brief Check whether a packet is in the pipe.
 	//!
 	//!\return \c false if there is no pipe or the pipe is empty, \c true otherwise.
@@ -182,6 +201,25 @@ public:
 	outpin(const std::string& name_r) : pin<T>(name_r) {}
 
 	virtual ~outpin() {}
+
+	//!\brief Overrides named::rename.
+	//!
+	//! Ensures pipe is also renamed.
+	//!
+	//!\param name_r New name to give this outpin.
+	virtual std::string rename(const std::string& name_r)
+	{
+		if(d_pipe_cr_sp)
+		{
+			auto pipe = d_pipe_cr_sp->access();
+			if(pipe->output())
+			{
+				pipe->rename(name_r + "_to_" + pipe->output()->name());
+			}
+		}
+
+		return named::rename(name_r);
+	}
 
 	//!\brief Moves a packet to the pipe.
 	//!
@@ -360,6 +398,21 @@ public:
 	//!\param n The index of the output pin.
 	virtual outpin<T>& output(const size_t n) { return d_outputs[n]; }
 
+	//!\brief Overrides named::rename.
+	//!
+	//! Ensure pins are also renamed.
+	//!
+	//!\param name_r New name to give this node.
+	virtual std::string rename(const std::string& name_r)
+	{
+		for(size_t i = 0; i != outs(); ++i)
+		{
+			output(i).outpin<T>::rename(name_r + "_out" + static_cast<char>('0' + i));
+		}
+
+		return named::rename(name_r);
+	}
+
 	//!\brief Disconnect all pins.
 	virtual void sever()
 	{
@@ -432,6 +485,21 @@ public:
 	//!
 	//!\param n The index of the input pin.
 	virtual inpin<T>& input(const size_t n) { return d_inputs[n]; }
+
+	//!\brief Overrides named::rename.
+	//!
+	//! Ensure pins are also renamed.
+	//!
+	//!\param name_r New name to give this node.
+	virtual std::string rename(const std::string& name_r)
+	{
+		for(size_t i = 0; i != ins(); ++i)
+		{
+			input(i).inpin<T>::rename(name_r + "_in" + static_cast<char>('0' + i));
+		}
+
+		return named::rename(name_r);
+	}
 
 	//!\brief Disconnect all pins.
 	virtual void sever()
@@ -516,6 +584,26 @@ public:
 	{}
 
 	virtual ~transformer() {}
+
+	//!\brief Overrides named::rename.
+	//!
+	//! Ensures pins are also renamed.
+	//!
+	//!\param name_r New name to give this node.
+	virtual std::string rename(const std::string& name_r)
+	{
+		for(size_t i = 0; i != producer<P>::outs(); ++i)
+		{
+			producer<P>::output(i).outpin<P>::rename(name_r + "_out" + static_cast<char>('0' + i));
+		}
+
+		for(size_t i = 0; i != consumer<C>::ins(); ++i)
+		{
+			consumer<C>::input(i).inpin<C>::rename(name_r + "_in" + static_cast<char>('0' + i));
+		}
+
+		return named::rename(name_r);
+	}
 
 	//!\brief Disconnect all pins.
 	virtual void sever()
