@@ -142,6 +142,26 @@ public:
 		return true;
 	}
 
+	//!\brief Disconnect a node's pin.
+	//!
+	//!\param sp_p The node.
+	//!\param p_pin The pin's index.
+	template<typename T>
+	void disconnect(std::shared_ptr<flow::producer<T>> sp_p, const size_t p_pin)
+	{
+		sp_p->disconnect(p_pin);
+	}
+
+	//!\brief Disconnect a node's pin.
+	//!
+	//!\param sp_p The node.
+	//!\param p_pin The pin's index.
+	template<typename T>
+	void disconnect(std::shared_ptr<flow::consumer<T>> sp_p, const size_t p_pin)
+	{
+		sp_p->disconnect(p_pin);
+	}
+
 	//!\brief Starts all nodes in the graph.
 	//!
 	//! To avoid packet build-up in pipes, pure consuming node are started first, transforming nodes second and pure producing nodes last.

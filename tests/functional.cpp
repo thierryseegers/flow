@@ -190,6 +190,80 @@ bool tee(args_t args)
 	return true;
 }
 
+bool disconnect(args_t args)
+{
+	size_t n = stoul(args["count"]);
+
+	auto sp_pn = make_shared<produce_n<int>>(n);
+	auto sp_tc = make_shared<flow::samples::generic::tee<int>>();
+	auto sp_cc1 = make_shared<consumption_counter<int>>();
+	auto sp_cc2 = make_shared<consumption_counter<int>>();
+
+	{
+		flow::graph g;
+
+		g.add(sp_pn);
+		g.add(sp_tc);
+		g.add(sp_cc1, "consumption_counter_1");
+		g.add(sp_cc2, "consumption_counter_2");
+
+		// Run the graph with all nodes connected.
+		g.connect<int>(sp_pn, 0, sp_tc, 0);
+		g.connect<int>(sp_tc, 0, sp_cc1, 0);
+		g.connect<int>(sp_tc, 1, sp_cc2, 0);
+
+		g.start();
+
+		this_thread::sleep_for(chrono::milliseconds(100));
+
+		g.stop();
+
+		if(sp_cc1->count(0) != n || sp_cc2->count(0) != n)
+		{
+			return false;
+		}
+
+		// Run the graph with only sp_cc1 disconnected.
+		sp_pn->reset();
+		sp_cc1->reset();
+		sp_cc2->reset();
+
+		g.disconnect<int>(sp_cc1, 0);
+
+		g.start();
+
+		this_thread::sleep_for(chrono::milliseconds(100));
+
+		g.stop();
+
+		if(sp_cc1->count(0) != 0 || sp_cc2->count(0) != n)
+		{
+			return false;
+		}
+
+		// Run the graph with only sp_cc2 disconnected.
+		sp_pn->reset();
+		sp_cc1->reset();
+		sp_cc2->reset();
+
+		g.disconnect<int>(sp_cc2, 0);
+		g.connect<int>(sp_tc, 0, sp_cc1, 0);
+
+		g.start();
+
+		this_thread::sleep_for(chrono::milliseconds(100));
+
+		g.stop();
+
+		if(sp_cc1->count(0) != n || sp_cc2->count(0) != 0)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 bool add_delay(args_t args)
 {
 	{
@@ -265,6 +339,11 @@ int main(int argc, char* argv[])
 	{
 		const char* types[] = { "count" };
 		b = tee(make_args(types, &argv[2], argc - 2));
+	}
+	else if(strcmp(argv[1], "disconnect") == 0)
+	{
+		const char* types[] = { "count" };
+		b = disconnect(make_args(types, &argv[2], argc - 2));
 	}
 	else if(strcmp(argv[1], "add_delay") == 0)
 	{

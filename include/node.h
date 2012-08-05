@@ -30,6 +30,9 @@ template<typename T>
 class outpin;
 
 template<typename T>
+class consumer;
+
+template<typename T>
 class producer;
 
 class graph;
@@ -86,6 +89,19 @@ class inpin : public pin<T>
 	std::mutex *d_transition_m_p;
 
 	using pin<T>::d_pipe_cr_sp;
+
+	//!\brief Disconnect this inpin.
+	virtual void disconnect()
+	{
+		{
+			auto pipe_a = d_pipe_cr_sp->access();
+			pipe_a->rename(pipe_a->input()->name() + "_to_" + "nothing");
+		}
+
+		pin<T>::disconnect();
+	}
+
+	friend class consumer<T>;
 
 public:
 	//!\brief Constructor.
@@ -153,6 +169,17 @@ class outpin : public pin<T>
 {
 	using pin<T>::d_pipe_cr_sp;
 
+	//!\brief Disconnect this outpin.
+	virtual void disconnect()
+	{
+		{
+			auto pipe_a = d_pipe_cr_sp->access();
+			pipe_a->rename(std::string("nothing") + "_to_" + pipe_a->output()->name());
+		}
+
+		pin<T>::disconnect();
+	}
+
 	//!\brief Connect this outpin to an inpin with a pipe.
 	//!
 	//! If this output pin is already connected to a pipe, it will be disconnected.
@@ -166,7 +193,7 @@ class outpin : public pin<T>
 		// Disconnect this outpin from it's pipe, if it has one.
 		if(d_pipe_cr_sp)
 		{
-			pin<T>::disconnect();
+			disconnect();
 		}
 
 		if(inpin_r.pin<T>::d_pipe_cr_sp)
@@ -174,7 +201,7 @@ class outpin : public pin<T>
 			// The inpin already has a pipe, connect this outpin to it.
 			auto inpin_pipe_a = inpin_r.pin<T>::d_pipe_cr_sp->access();
 		
-			//... but first, diconnects it from it's other output pin.
+			//... but first, disconnects it from it's other output pin.
 			if(inpin_pipe_a->input()){
 				inpin_pipe_a->input()->disconnect();
 			}
@@ -375,6 +402,11 @@ class producer : public virtual node, public detail::producer
 		output(p_pin).connect(consumer_p->input(c_pin));
 	}
 
+	virtual void disconnect(size_t p_pin)
+	{
+		output(p_pin).disconnect();
+	}
+
 	friend class graph;
 
 public:
@@ -464,6 +496,13 @@ template<typename T>
 class consumer : public virtual node, public detail::consumer
 {
 	std::vector<inpin<T>> d_inputs;
+
+	virtual void disconnect(size_t p_pin)
+	{
+		input(p_pin).disconnect();
+	}
+
+	friend class graph;
 
 public:
 	//!\param name_r The name to give this node.
