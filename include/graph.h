@@ -28,6 +28,9 @@ class graph : public named
 	typedef std::map<std::string, std::unique_ptr<std::thread>> threads_t;
 	threads_t d_threads;
 
+	typedef std::map<std::string, std::map<size_t, std::pair<std::string, size_t>>> connections_t;
+	connections_t connections;
+
 public:
 	//!\param name_r The name of this graph.
 	graph(const std::string name_r = "graph") : named(name_r)
@@ -63,6 +66,8 @@ public:
 		{
 			d_consumers[node_p->name()] = node_p;
 		}
+
+		connections[node_p->name()];
 	}
 
 	//!\brief Removes a node from the graph.
@@ -82,6 +87,8 @@ public:
 			p = i->second;
 			n->erase(i);
 		}
+
+		connections.erase(name_r);
 
 		return p;
 	}
@@ -115,6 +122,8 @@ public:
 		
 		std::dynamic_pointer_cast<producer<T>>(p->second)->connect(p_pin, std::dynamic_pointer_cast<consumer<T>>(c->second).get(), c_pin);
 
+		connections[p_name_r][p_pin] = std::make_pair(c_name_r, c_pin);
+
 		return true;
 	}
 
@@ -139,6 +148,8 @@ public:
 		
 		sp_p->connect(p_pin, sp_c.get(), c_pin);
 
+		connections[sp_p->name()][p_pin] = std::make_pair(sp_c->name(), c_pin);
+
 		return true;
 	}
 
@@ -150,16 +161,20 @@ public:
 	void disconnect(std::shared_ptr<flow::producer<T>> sp_p, const size_t p_pin)
 	{
 		sp_p->disconnect(p_pin);
+
+		connections[sp_p->name()][p_pin] = std::make_pair(std::string(), 0);
 	}
 
 	//!\brief Disconnect a node's pin.
 	//!
-	//!\param sp_p The node.
-	//!\param p_pin The pin's index.
+	//!\param sp_c The node.
+	//!\param c_pin The pin's index.
 	template<typename T>
-	void disconnect(std::shared_ptr<flow::consumer<T>> sp_p, const size_t p_pin)
+	void disconnect(std::shared_ptr<flow::consumer<T>> sp_c, const size_t c_pin)
 	{
-		sp_p->disconnect(p_pin);
+		sp_c->disconnect(c_pin);
+
+		connections[sp_c->name()][c_pin] = std::make_pair(std::string(), 0);
 	}
 
 	//!\brief Starts all nodes in the graph.
@@ -219,6 +234,29 @@ public:
 		for(auto& i : d_producers){ stop_f(i); }
 		for(auto& i : d_transformers){ stop_f(i); }
 		for(auto& i : d_consumers){ stop_f(i); }
+	}
+
+	//!\brief Produces a dot syntax of the graph.
+	//!
+	//!\param o The output stream to output the syntax.
+	virtual std::ostream& to_dot(std::ostream& o)
+	{
+		o << "digraph " << (name() == "graph" ? "graph1" : name()) << "\n{\n";
+		o << "\trankdir = LR\n";
+		o << "\tnode [shape = record, fontname = \"Helvetica\"]\n";
+		o << "\tedge [color = \"midnightblue\", labelfontname = \"Courier\"]\n";
+
+		for(auto& p : connections)
+		{
+			for(auto& i : p.second)
+			{
+				o << "\t" << p.first << " -> " << i.second.first << " [taillabel = \"" << i.first << "\", headlabel = \"" << i.second.second << "\"]\n";
+			}
+		}
+
+		o << "}" << std::endl;
+
+		return o;
 	}
 
 private:
