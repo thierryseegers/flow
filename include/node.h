@@ -390,7 +390,8 @@ class consumer;
 template<typename T>
 class producer : public virtual node, public detail::producer
 {
-	std::vector<outpin<T>> d_outputs;
+	typedef std::vector<outpin<T>> outputs_t;
+	outputs_t d_outputs;
 
 protected:
 	//!\brief Connect this producer to a consumer.
@@ -414,9 +415,9 @@ protected:
 	//!\brief Disconnect all pins.
 	virtual void sever()
 	{
-		for(auto& out_r : d_outputs)
+		for(auto& outpin : d_outputs)
 		{
-			out_r.disconnect();
+			outpin.disconnect();
 		}
 	}
 
@@ -470,11 +471,24 @@ public:
 	//!\param n The index of the output pin.
 	virtual outpin<T>& output(const size_t n) { return d_outputs[n]; }
 
+	//!\brief Returns a const reference to an outpin pin.
+	//!
+	//!\param n The index of the output pin.
+	virtual const outpin<T>& output(const size_t n) const { return d_outputs[n]; }
+
+	//!\brief Returns a reference to the container of output pins.
+	virtual outputs_t& outputs() { return d_outputs; }
+
+	//!\brief Returns a const reference to the container of output pins.
+	virtual const outputs_t& outputs() const { return d_outputs; }
+
 	//!\brief Overrides named::rename.
 	//!
 	//! Ensure pins are also renamed.
 	//!
 	//!\param name_r New name to give this node.
+	//!
+	//!\return The node's previous name.
 	virtual std::string rename(const std::string& name_r)
 	{
 		for(size_t i = 0; i != outs(); ++i)
@@ -499,7 +513,8 @@ public:
 template<typename T>
 class consumer : public virtual node, public detail::consumer
 {
-	std::vector<inpin<T>> d_inputs;
+	typedef std::vector<inpin<T>> inputs_t;
+	inputs_t d_inputs;
 
 protected:
 	//!\brief Disconnect an inpin of this consumer.
@@ -513,18 +528,18 @@ protected:
 	//!\brief Disconnect all pins.
 	virtual void sever()
 	{
-		for(auto& in_r : d_inputs)
+		for(auto& inpin : d_inputs)
 		{
-			in_r.disconnect();
+			inpin.disconnect();
 		}
 	}
 
 	//!\brief Tests whether there are any packets at any of the inpins.
 	virtual bool incoming()
 	{
-		for(size_t i = 0; i != ins(); ++i)
+		for(auto& inpin : d_inputs)
 		{
-			if(input(i).peek())
+			if(inpin.peek())
 			{
 				return true;
 			}
@@ -591,6 +606,17 @@ public:
 	//!
 	//!\param n The index of the input pin.
 	virtual inpin<T>& input(const size_t n) { return d_inputs[n]; }
+
+	//!\brief Returns a const reference to an input pin.
+	//!
+	//!\param n The index of the input pin.
+	virtual const inpin<T>& input(const size_t n) const { return d_inputs[n]; }
+
+	//!\brief Returns a reference to the container of input pins.
+	virtual inputs_t& inputs() { return d_inputs; }
+
+	//!\brief Returns a const reference to the container of input pins.
+	virtual const inputs_t& inputs() const { return d_inputs; }
 
 	//!\brief Overrides named::rename.
 	//!

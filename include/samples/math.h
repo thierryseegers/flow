@@ -54,9 +54,9 @@ public:
 			// Gather the terms in a container.
 			std::vector<std::unique_ptr<packet<T>>> terms;
 
-			for(size_t i = 0; i != consumer<T>::ins(); ++i)
+			for(auto& inpin : consumer<T>::inputs())
 			{
-				terms.emplace_back(move(consumer<T>::input(i).pop()));
+				terms.emplace_back(move(inpin.pop()));
 			}
 
 			// Start the sum as equal to the first term.

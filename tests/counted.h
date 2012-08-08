@@ -21,11 +21,11 @@ public:
 		{
 			--n;
 
-			for(size_t i = 0; i != flow::producer<T>::outs(); ++i)
+			for(auto& outpin : flow::producer<T>::outputs())
 			{
 				std::unique_ptr<flow::packet<T>> packet_p(new flow::packet<T>(T()));
 
-				flow::producer<T>::output(i).push(std::move(packet_p));
+				outpin.push(std::move(packet_p));
 			}
 		}
 	}
