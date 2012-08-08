@@ -392,6 +392,7 @@ class producer : public virtual node, public detail::producer
 {
 	std::vector<outpin<T>> d_outputs;
 
+protected:
 	//!\brief Connect this producer to a consumer.
 	//!
 	//!\param p_pin The index of this node's output pin.
@@ -410,9 +411,6 @@ class producer : public virtual node, public detail::producer
 		output(pin).disconnect();
 	}
 
-	friend class graph;
-
-protected:
 	//!\brief Disconnect all pins.
 	virtual void sever()
 	{
@@ -421,6 +419,35 @@ protected:
 			out_r.disconnect();
 		}
 	}
+
+	//!\brief The node's execution function.
+	//!
+	//! This is the implementation of node::operator()().
+	//! Nodes that are pure producers should use this function as their execution function.
+	virtual void operator()()
+	{
+		state::type s(state());
+
+		while(s != state::stopped)
+		{
+			if(s == state::paused)
+			{
+				std::unique_lock<std::mutex> ul(d_transition_m);
+				d_transition_cv.wait(ul, [&s, this](){ return (s = this->state()) != state::paused; });
+			}
+			else
+			{
+				s = state();
+			}
+
+			if(s == state::started)
+			{
+				produce();
+			}
+		}
+	}
+
+	friend class graph;
 
 public:
 	//!\param name_r The name to give this node.
@@ -458,33 +485,6 @@ public:
 		return named::rename(name_r);
 	}
 
-	//!\brief The node's execution function.
-	//!
-	//! This is the implementation of node::operator()().
-	//! Nodes that are pure producers should use this function as their execution function.
-	virtual void operator()()
-	{
-		state::type s(state());
-
-		while(s != state::stopped)
-		{
-			if(s == state::paused)
-			{
-				std::unique_lock<std::mutex> ul(d_transition_m);
-				d_transition_cv.wait(ul, [&s, this](){ return (s = this->state()) != state::paused; });
-			}
-			else
-			{
-				s = state();
-			}
-
-			if(s == state::started)
-			{
-				produce();
-			}
-		}
-	}
-
 	//!\brief Producing function.
 	//!
 	//! This function is called from the operator()() execution function.
@@ -501,6 +501,7 @@ class consumer : public virtual node, public detail::consumer
 {
 	std::vector<inpin<T>> d_inputs;
 
+protected:
 	//!\brief Disconnect an inpin of this consumer.
 	//!
 	//!\param pin Index of the pin to disconnect.
@@ -509,9 +510,6 @@ class consumer : public virtual node, public detail::consumer
 		input(pin).disconnect();
 	}
 	
-	friend class graph;
-
-protected:
 	//!\brief Disconnect all pins.
 	virtual void sever()
 	{
@@ -519,42 +517,6 @@ protected:
 		{
 			in_r.disconnect();
 		}
-	}
-
-public:
-	//!\param name_r The name to give this node.
-	//!\param ins Numbers of input pins.
-	consumer(const std::string& name_r, const size_t ins) : node(name_r)
-	{
-		for(size_t i = 0; i != ins; ++i)
-		{
-			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), &d_transition_cv, &d_transition_m));
-		}
-	}
-
-	virtual ~consumer() {}
-
-	//!\brief Returns the number of input pins.
-	virtual size_t ins() const { return d_inputs.size(); }
-
-	//!\brief Returns a reference to an input pin.
-	//!
-	//!\param n The index of the input pin.
-	virtual inpin<T>& input(const size_t n) { return d_inputs[n]; }
-
-	//!\brief Overrides named::rename.
-	//!
-	//! Ensure pins are also renamed.
-	//!
-	//!\param name_r New name to give this node.
-	virtual std::string rename(const std::string& name_r)
-	{
-		for(size_t i = 0; i != ins(); ++i)
-		{
-			input(i).inpin<T>::rename(name_r + "_in" + static_cast<char>('0' + i));
-		}
-
-		return named::rename(name_r);
 	}
 
 	//!\brief Tests whether there are any packets at any of the inpins.
@@ -607,6 +569,44 @@ public:
 		}
 	}
 
+	friend class graph;
+
+public:
+	//!\param name_r The name to give this node.
+	//!\param ins Numbers of input pins.
+	consumer(const std::string& name_r, const size_t ins) : node(name_r)
+	{
+		for(size_t i = 0; i != ins; ++i)
+		{
+			d_inputs.push_back(inpin<T>(name_r + "_in" + static_cast<char>('0' + i), &d_transition_cv, &d_transition_m));
+		}
+	}
+
+	virtual ~consumer() {}
+
+	//!\brief Returns the number of input pins.
+	virtual size_t ins() const { return d_inputs.size(); }
+
+	//!\brief Returns a reference to an input pin.
+	//!
+	//!\param n The index of the input pin.
+	virtual inpin<T>& input(const size_t n) { return d_inputs[n]; }
+
+	//!\brief Overrides named::rename.
+	//!
+	//! Ensure pins are also renamed.
+	//!
+	//!\param name_r New name to give this node.
+	virtual std::string rename(const std::string& name_r)
+	{
+		for(size_t i = 0; i != ins(); ++i)
+		{
+			input(i).inpin<T>::rename(name_r + "_in" + static_cast<char>('0' + i));
+		}
+
+		return named::rename(name_r);
+	}
+
 	//!\brief Consuming function.
 	//!
 	//! This function is called from the operator()() execution function.
@@ -632,6 +632,9 @@ protected:
 		producer<P>::sever();
 	}
 
+	//!\brief Implementation of node::operator()().
+	virtual void operator()() { consumer<C>::operator()(); }
+	
 public:
 	//!\param name_r The name to give this node.
 	//!\param ins Numbers of input pins.
@@ -661,9 +664,6 @@ public:
 		return named::rename(name_r);
 	}
 
-	//!\brief Implementation of node::operator()().
-	virtual void operator()() { consumer<C>::operator()(); }
-	
 	//!\brief consumer::ready() function to be implemented by concrete class.
 	virtual void ready(size_t n) = 0;
 };
