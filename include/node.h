@@ -402,12 +402,25 @@ class producer : public virtual node, public detail::producer
 		output(p_pin).connect(consumer_p->input(c_pin));
 	}
 
-	virtual void disconnect(size_t p_pin)
+	//!\brief Disconnect an outpin of this producer.
+	//!
+	//!\param pin Index of the pin to disconnect.
+	virtual void disconnect(size_t pin)
 	{
-		output(p_pin).disconnect();
+		output(pin).disconnect();
 	}
 
 	friend class graph;
+
+protected:
+	//!\brief Disconnect all pins.
+	virtual void sever()
+	{
+		for(auto& out_r : d_outputs)
+		{
+			out_r.disconnect();
+		}
+	}
 
 public:
 	//!\param name_r The name to give this node.
@@ -443,15 +456,6 @@ public:
 		}
 
 		return named::rename(name_r);
-	}
-
-	//!\brief Disconnect all pins.
-	virtual void sever()
-	{
-		for(auto& out_r : d_outputs)
-		{
-			out_r.disconnect();
-		}
 	}
 
 	//!\brief The node's execution function.
@@ -497,12 +501,25 @@ class consumer : public virtual node, public detail::consumer
 {
 	std::vector<inpin<T>> d_inputs;
 
-	virtual void disconnect(size_t p_pin)
+	//!\brief Disconnect an inpin of this consumer.
+	//!
+	//!\param pin Index of the pin to disconnect.
+	virtual void disconnect(size_t pin)
 	{
-		input(p_pin).disconnect();
+		input(pin).disconnect();
 	}
-
+	
 	friend class graph;
+
+protected:
+	//!\brief Disconnect all pins.
+	virtual void sever()
+	{
+		for(auto& in_r : d_inputs)
+		{
+			in_r.disconnect();
+		}
+	}
 
 public:
 	//!\param name_r The name to give this node.
@@ -540,15 +557,6 @@ public:
 		return named::rename(name_r);
 	}
 
-	//!\brief Disconnect all pins.
-	virtual void sever()
-	{
-		for(auto& in_r : d_inputs)
-		{
-			in_r.disconnect();
-		}
-	}
-	
 	//!\brief Tests whether there are any packets at any of the inpins.
 	virtual bool incoming()
 	{
@@ -615,6 +623,15 @@ class transformer : public consumer<C>, public producer<P>, public detail::trans
 {
 	virtual void produce() {}
 
+protected:
+	//!\brief Disconnect all pins.
+	virtual void sever()
+	{
+		consumer<C>::sever();
+
+		producer<P>::sever();
+	}
+
 public:
 	//!\param name_r The name to give this node.
 	//!\param ins Numbers of input pins.
@@ -642,14 +659,6 @@ public:
 		}
 
 		return named::rename(name_r);
-	}
-
-	//!\brief Disconnect all pins.
-	virtual void sever()
-	{
-		consumer<C>::sever();
-
-		producer<P>::sever();
 	}
 
 	//!\brief Implementation of node::operator()().
