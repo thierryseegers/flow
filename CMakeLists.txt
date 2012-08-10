@@ -11,6 +11,7 @@ enable_testing()
 
 add_subdirectory(documentation)
 add_subdirectory(examples)
+add_subdirectory(include)
 add_subdirectory(tests)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION .)
