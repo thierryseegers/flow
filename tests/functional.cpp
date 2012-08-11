@@ -4,6 +4,7 @@
 
 #include "flow.h"
 #include "samples/generic.h"
+#include "samples/math.h"
 
 #include <cstring>
 #include <iostream>
@@ -306,6 +307,199 @@ bool add_delay(args_t args)
 	return true;
 }
 
+template<typename T>
+bool add(args_t args)
+{
+	if(args["type"] == "int")
+	{
+		return add<int>(args);
+	}
+	else if(args["type"] == "string")
+	{
+		return add<string>(args);
+	}
+
+	return false;
+}
+
+template<>
+bool add<int>(args_t args)
+{
+	{
+		auto sp_pu1 = make_shared<pusher<int>>();
+		auto sp_pu2 = make_shared<pusher<int>>();
+		auto sp_a = make_shared<flow::samples::math::adder<int>>();
+		auto sp_po = make_shared<popper<int>>();
+	
+		flow::graph g;
+	
+		g.add(sp_pu1, "pusher_1");
+		g.add(sp_pu2, "pusher_2");
+		g.add(sp_a);
+		g.add(sp_po, "popper");
+
+		g.connect<int>(sp_pu1, 0, sp_a, 0);
+		g.connect<int>(sp_pu2, 0, sp_a, 1);
+		g.connect<int>(sp_a, 0, sp_po, 0);
+
+		g.start();
+
+		size_t c = stoul(args["count"]);
+		int n = 11;
+		while(c)
+		{
+			--c;
+			sp_pu1->push(n);
+			sp_pu2->push(n);
+
+			if(sp_po->pop()->data() != n * 2)
+			{
+				return false;
+			}
+
+			n += n;
+		}
+	}
+
+	return true;
+}
+
+template<>
+bool add<string>(args_t args)
+{
+	{
+		auto sp_pu1 = make_shared<pusher<string>>();
+		auto sp_pu2 = make_shared<pusher<string>>();
+		auto sp_a = make_shared<flow::samples::math::adder<string>>();
+		auto sp_po = make_shared<popper<string>>();
+	
+		flow::graph g;
+	
+		g.add(sp_pu1, "pusher_1");
+		g.add(sp_pu2, "pusher_2");
+		g.add(sp_a);
+		g.add(sp_po, "popper");
+
+		g.connect<string>(sp_pu1, 0, sp_a, 0);
+		g.connect<string>(sp_pu2, 0, sp_a, 1);
+		g.connect<string>(sp_a, 0, sp_po, 0);
+
+		g.start();
+
+		size_t c = stoul(args["count"]);
+		string s = "ha";
+		while(c)
+		{
+			--c;
+			sp_pu1->push(s);
+			sp_pu2->push(s);
+
+			if(sp_po->pop()->data() != (s + s))
+			{
+				return false;
+			}
+
+			s += s;
+		}
+	}
+
+	return true;
+}
+
+template<typename T>
+bool const_add(args_t args)
+{
+	if(args["type"] == "int")
+	{
+		return const_add<int>(args);
+	}
+	else if(args["type"] == "string")
+	{
+		return const_add<string>(args);
+	}
+
+	return false;
+}
+
+template<>
+bool const_add<int>(args_t args)
+{
+	{
+		auto sp_pu = make_shared<pusher<int>>();
+		auto sp_a = make_shared<flow::samples::math::const_adder<int>>(11);
+		auto sp_po = make_shared<popper<int>>();
+	
+		flow::graph g;
+	
+		g.add(sp_pu, "pusher");
+		g.add(sp_a);
+		g.add(sp_po, "popper");
+
+		g.connect<int>(sp_pu, 0, sp_a, 0);
+		g.connect<int>(sp_a, 0, sp_po, 0);
+
+		g.start();
+
+		size_t c = stoul(args["count"]);
+		int n = 11;
+		while(c)
+		{
+			--c;
+
+			sp_pu->push(n);
+
+			if(sp_po->pop()->data() != n + 11)
+			{
+				return false;
+			}
+
+			n += n;
+		}
+	}
+
+	return true;
+}
+
+template<>
+bool const_add<string>(args_t args)
+{
+	{
+		auto sp_pu = make_shared<pusher<string>>();
+		auto sp_a = make_shared<flow::samples::math::const_adder<string>>("ho");
+		auto sp_po = make_shared<popper<string>>();
+	
+		flow::graph g;
+	
+		g.add(sp_pu, "pusher");
+		g.add(sp_a);
+		g.add(sp_po, "popper");
+
+		g.connect<string>(sp_pu, 0, sp_a, 0);
+		g.connect<string>(sp_a, 0, sp_po, 0);
+
+		g.start();
+
+		size_t c = stoul(args["count"]);
+		string s = "ho";
+		while(c)
+		{
+			--c;
+
+			sp_pu->push(s);
+
+			if(sp_po->pop()->data() != s + "ho")
+			{
+				return false;
+			}
+
+			s += s;
+		}
+	}
+
+	return true;
+}
+
+
 int main(int argc, char* argv[])
 {
 	bool b = false;
@@ -349,6 +543,16 @@ int main(int argc, char* argv[])
 	{
 		const char* types[] = { "" };
 		b = add_delay(make_args(types, &argv[2], argc - 2));
+	}
+	else if(strcmp(argv[1], "add") == 0)
+	{
+		const char* types[] = { "type", "count" };
+		b = add<void>(make_args(types, &argv[2], argc - 2));
+	}
+	else if(strcmp(argv[1], "const_add") == 0)
+	{
+		const char* types[] = { "type", "count" };
+		b = const_add<void>(make_args(types, &argv[2], argc - 2));
 	}
 
 	return b ? 0 : 1;

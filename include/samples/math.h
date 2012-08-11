@@ -90,7 +90,7 @@ public:
 	virtual ~const_adder() {}
 
 	//!\brief Implementation of consumer::ready().
-	virtual void ready()
+	virtual void ready(size_t)
 	{
 		std::unique_ptr<packet<T>> packet_p = consumer<T>::input(0).pop();
 
