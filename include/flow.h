@@ -48,7 +48,6 @@
 \li \ref introduction
 \li \ref considerations
 \li \ref principles
-\li \ref improvements
 \li \ref samples
 \li \ref examples
 \li \ref thanks
@@ -61,12 +60,12 @@ framework which provides the building blocks for streaming data packets through 
 of data-transforming nodes. 
 Note that this library has nothing to do with computer networking. 
 In the context of this framework, a data packet is a slice of a data stream.
-
 A \ref flow::graph will typically be composed of \ref flow::producer "producer nodes", \ref flow::transformer "transformer nodes" and 
 \ref flow::consumer "consumer nodes".
+A data packets is produced by a single producer node, can later go through any number of transformer nodes and is finally consumed by a single consumer node.
 Nodes are connected to one another by \ref flow::pipe "pipes" attached to their \ref flow::inpin "input pins" and \ref flow::outpin "output pins".
-As a library user, you are expected to write concrete node classes that perform the tasks you require.
-The graph and base node classes already provide the necessary API to build and run a graph.
+The graph and base node classes already provide the necessary API to build a graph by connecting nodes together and to run the graph.
+As a library user, you are only expected to write concrete node classes that perform the tasks you require.
 
 Here's an example of a simple graph.
 The two producers nodes could be capturing data from some hardware or be generating a steady stream of data on their own.
@@ -77,7 +76,8 @@ The transformer's output data finally goes to a consumer node.
 
 Should we need to monitor the data coming in from <tt>producer 2</tt>, we can \ref flow::samples::generic::tee "tee" it to another consumer node.
 This new consumer node could save all the data it receives to a file or log it in real-time without preserving it.
-The \ref flow::samples::generic::tee "tee" transformer node is a \ref samples "sample concrete node" that duplicates incoming data to all its outputs.
+The \ref flow::samples::generic::tee "tee" transformer node is an example of a concrete node that duplicates incoming data to all its outputs.
+It is provided in the framework and can be found in the \ref flow::samples namespace.
 
 \image html ./introduction_graph_tee.png "Data flow for a graph with a tee transformer node"
 
@@ -90,7 +90,7 @@ This implementation:
   - auto keyword
   - lambda expression
   - r-value reference
-  - move constructor and move function
+  - move constructor and std::move function
  - depends on the following C++11 headers:
   - \c \<chrono\>
   - \c \<function\>
@@ -98,15 +98,14 @@ This implementation:
   - \c \<thread\>
   - \c \<utility\>
  - depends on a thirdparty library, included in the source package. See \ref thirdparty.
- - has been tested with Visual Studio 2012 RC, GCC 4.6.3 and GCC 4.7.0.
- - uses <a href="http://www.cmake.org">CMake</a> to build examples.
+ - has been tested with Visual Studio 2012 RC and GCC 4.7.0.
+ - uses <a href="http://www.cmake.org">CMake</a> as the build and packaging tool. As a user of flow, you do not need to build anything since it is only headers.
  - uses <a href="http://www.stack.nl/~dimitri/doxygen/index.html">Doxygen</a> to generate its documentation (and, optionally, <a href="http://www.graphviz.org/">Graphviz's dot</a>).
 
 \section thirdparty Use of thirdparty libraries
 
  - <a href="http://www.codeproject.com/KB/threads/lwsync.aspx">lwsync</a>: node.h 
-	uses lwsync::critical_resource<T> and lwsync::monitor<T> to perform  resource 
-	synchronization.
+	uses lwsync::critical_resource<T> and lwsync::monitor<T> to perform resource synchronization.
 	This headers-only library is already included in the source package.
 	You do not need to install it.
 	lwsync has been modified to:
@@ -121,16 +120,19 @@ When flowing through the graph, \ref flow::packet "data packets" are wrapped in 
 This helps memory managment tremendously and enforces the idea that, at any point in time, 
 only a single entity -pipe or node- is responsible for a data packet.
 
+\subsection node_state Node state
+
+A node can be in one of three states: \ref flow::state::paused "paused", \ref flow::state::started "started" or \ref flow::state::stopped "stopped".
+Before a node can transition to a new state, it must be added to a graph.
+Transitioning between these states is done by calling a corresponding member function of the \ref flow::graph "graph" class.
+For this relase, all nodes in a graph are always in the same state.
+Regardless of the nodes' state, nodes can be added to and removed from a graph at any time and can be connected to and disconnected from another node at any time.
+
 \subsection thread_per_node A thread per node
 
 flow is multi-threaded in that the \ref flow::graph "graph" assigns a thread of execution to each of its nodes.
-The lifetime of these threads is already taken care by \ref flow::graph "graph".
-As a library user, the only mutli-threaded code you would write is whatever would go beyond graph management.
-
-The thread is started by \ref flow::graph "graph" by passing a reference to the node object to boost::thread. 
-Since the application passes a shared_ptr to a node to the graph, it is possible for the application to modify the node's state while it is running.
-If the application does so, it must therefore do it in a thread-safe manner.
-This implies that the concrete node classes you design would need support for concurrent access.
+The lifetime of these threads is taken care by \ref flow::graph "graph".
+As a library user, the only mutli-threaded code you would write is whatever a node would require to perform its work.
 
 \subsection consumption_time Consumption time
 
@@ -150,13 +152,9 @@ This feature serves two purposes:
  - nodes can be refered to by their names when building a graph, improving code readability greatly.
  - helps debugging, especially since all pins and pipes are also named and have names automatically generated based on what they are connected to.
 
-\section improvements Future improvements
-
-See the \ref todo "Todo list".
-
 \section samples Samples concrete nodes
 
-As convenience, a collection of concrete nodes is provided. 
+As convenience, a small collection of concrete nodes is provided. 
 They are found in the \ref flow::samples::generic and \ref flow::samples::math namespaces.
 
 \section examples Examples
