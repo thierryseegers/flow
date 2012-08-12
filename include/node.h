@@ -279,14 +279,6 @@ public:
 //!\brief Base class common to all nodes.
 class node : public named
 {
-protected:
-	std::condition_variable d_transition_cv;	//!< The condition variable to monitor the node's state.
-	std::mutex d_transition_m;					//!< The mutex to lock when waiting on d_transition_cv.
-
-	//!\brief Disconnect all pins.
-	virtual void sever() = 0;
-
-private:
 	state::type d_state_a; //!< The state of this node.
 
 	//!\brief Changes this node's state.
@@ -312,6 +304,13 @@ private:
 	}
 
 	friend class graph;
+
+protected:
+	std::condition_variable d_transition_cv;	//!< The condition variable to monitor the node's state.
+	std::mutex d_transition_m;					//!< The mutex to lock when waiting on d_transition_cv.
+
+	//!\brief Disconnect all pins.
+	virtual void sever() = 0;
 
 public:
 	//! Constructor.
