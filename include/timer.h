@@ -1,8 +1,6 @@
 #if !defined(FLOW_TIMER_H)
 	 #define FLOW_TIMER_H
 
-#include <lwsync/critical_resource.hpp>
-
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -21,10 +19,13 @@ namespace flow
 //!\brief Base class for an object that notifies listeners at some interval.
 class timer
 {
-	typedef lwsync::critical_resource<std::vector<std::function<void ()>>> listeners_cr_t;
-	listeners_cr_t d_listeners_cr;
-
 	std::atomic<bool> d_stop_a;
+
+protected:
+	typedef std::vector<std::function<void ()>> listeners_t;	//!< Convenience typedef.
+	listeners_t d_listeners;	//!< Listeners of this timer.
+
+	std::mutex d_listeners_m;	//!< Mutex to protect modifications to d_listeners.
 
 public:
 	timer() : d_stop_a(false) {}
@@ -48,13 +49,8 @@ public:
 	//!\param listener A functor that will be called at interval.
 	virtual void listen(const std::function<void ()>& listener)
 	{
-		d_listeners_cr.access()->push_back(listener);
-	}
-
-	//!\brief Returns a reference to listeners.
-	virtual listeners_cr_t& listeners()
-	{
-		return d_listeners_cr;
+		std::lock_guard<std::mutex> lg(d_listeners_m);
+		d_listeners.push_back(listener);
 	}
 
 	//!\brief Execution function to be implemented by concrete timers.
@@ -91,8 +87,8 @@ public:
 		while(!stopped())
 		{
 			{
-				auto listeners_a = listeners().const_access();
-				for(auto& listener : *listeners_a)
+				std::lock_guard<std::mutex> lg(d_listeners_m);
+				for(auto& listener : d_listeners)
 				{
 					listener();
 				}
