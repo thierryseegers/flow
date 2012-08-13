@@ -191,7 +191,7 @@ bool tee(args_t args)
 	return true;
 }
 
-bool disconnect(args_t args)
+bool reconnect(args_t args)
 {
 	size_t n = stoul(args["count"]);
 
@@ -217,7 +217,8 @@ bool disconnect(args_t args)
 
 		this_thread::sleep_for(chrono::milliseconds(100));
 
-		g.stop();
+		if(args["halt"] == "pause") g.pause();
+		else if(args["halt"] == "stop") g.stop();
 
 		if(sp_cc1->count(0) != n || sp_cc2->count(0) != n)
 		{
@@ -225,17 +226,18 @@ bool disconnect(args_t args)
 		}
 
 		// Run the graph with only sp_cc1 disconnected.
+		g.disconnect<int>(sp_cc1, 0);
+
 		sp_pn->reset();
 		sp_cc1->reset();
 		sp_cc2->reset();
 
-		g.disconnect<int>(sp_cc1, 0);
-
-		g.start();
+		if(args["halt"] != "nohalt") g.start();
 
 		this_thread::sleep_for(chrono::milliseconds(100));
 
-		g.stop();
+		if(args["halt"] == "pause") g.pause();
+		else if(args["halt"] == "stop") g.stop();
 
 		if(sp_cc1->count(0) != 0 || sp_cc2->count(0) != n)
 		{
@@ -243,18 +245,19 @@ bool disconnect(args_t args)
 		}
 
 		// Run the graph with only sp_cc2 disconnected.
-		sp_pn->reset();
-		sp_cc1->reset();
-		sp_cc2->reset();
-
 		g.disconnect<int>(sp_cc2, 0);
 		g.connect<int>(sp_tc, 0, sp_cc1, 0);
 
-		g.start();
+		sp_pn->reset();
+		sp_cc1->reset();
+		sp_cc2->reset();
+		
+		if(args["halt"] != "nohalt") g.start();
 
 		this_thread::sleep_for(chrono::milliseconds(100));
 
-		g.stop();
+		if(args["halt"] == "pause") g.pause();
+		else if(args["halt"] == "stop") g.stop();
 
 		if(sp_cc1->count(0) != n || sp_cc2->count(0) != 0)
 		{
@@ -534,10 +537,10 @@ int main(int argc, char* argv[])
 		const char* types[] = { "count" };
 		b = tee(make_args(types, &argv[2], argc - 2));
 	}
-	else if(strcmp(argv[1], "disconnect") == 0)
+	else if(strcmp(argv[1], "reconnect") == 0)
 	{
-		const char* types[] = { "count" };
-		b = disconnect(make_args(types, &argv[2], argc - 2));
+		const char* types[] = { "halt", "count" };
+		b = reconnect(make_args(types, &argv[2], argc - 2));
 	}
 	else if(strcmp(argv[1], "add_delay") == 0)
 	{
