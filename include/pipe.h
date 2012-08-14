@@ -5,6 +5,7 @@
 #include "packet.h"
 
 #include <memory>
+#include <mutex>
 #include <queue>
 #include <string>
 #include <utility>
@@ -41,6 +42,8 @@ class pipe : public named
 
 	size_t d_weight;
 
+	std::mutex d_mutex;
+
 public:
 	//!\brief Constructor for a new pipe.
 	//!
@@ -59,6 +62,11 @@ public:
 	{}
 
 	virtual ~pipe() {}
+
+	virtual std::unique_lock<std::mutex> lock()
+	{
+		return std::unique_lock<std::mutex>(d_mutex);
+	}
 
 	//!\brief Pointer to the producing node's output pin.
 	virtual outpin<T>* input() const
