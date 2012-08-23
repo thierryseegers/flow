@@ -5,6 +5,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <functional>
+#include <map>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -22,13 +23,14 @@ class timer
 	std::atomic<bool> d_stop_a;
 
 protected:
-	typedef std::vector<std::function<void ()>> listeners_t;	//!< Convenience typedef.
+	typedef std::map<size_t, const std::function<void ()>> listeners_t;	//!< Convenience typedef.
 	listeners_t d_listeners;	//!< Listeners of this timer.
+	size_t d_next_index;		//!< The token tat maps to a listener.
 
 	std::mutex d_listeners_m;	//!< Mutex to protect modifications to d_listeners.
 
 public:
-	timer() : d_stop_a(false) {}
+	timer() : d_stop_a(false), d_next_index(0) {}
 
 	virtual ~timer() {}
 
@@ -47,10 +49,21 @@ public:
 	//!\brief Adds a listener to this timer.
 	//!
 	//!\param listener A functor that will be called at interval.
-	virtual void listen(const std::function<void ()>& listener)
+	//!\return The token to pass to \ref ignore.
+	virtual size_t listen(const std::function<void ()>& listener)
 	{
 		std::lock_guard<std::mutex> lg(d_listeners_m);
-		d_listeners.push_back(listener);
+		d_listeners.insert(std::make_pair(d_next_index, listener));
+		return d_next_index++;
+	}
+
+	//!brief Removes a previously added listener.
+	//!
+	//!\param listener A functor that was previously added.
+	virtual void ignore(const size_t token)
+	{
+		std::lock_guard<std::mutex> lg(d_listeners_m);
+		d_listeners.erase(token);
 	}
 
 	//!\brief Execution function to be implemented by concrete timers.
@@ -90,7 +103,7 @@ public:
 				std::lock_guard<std::mutex> lg(d_listeners_m);
 				for(auto& listener : d_listeners)
 				{
-					listener();
+					listener.second();
 				}
 			}
 			
