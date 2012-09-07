@@ -145,7 +145,7 @@ public:
 		if(d_pipe_sp)
 		{
 			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
-			return d_pipe_sp->first.length();
+			return d_pipe_sp->first.length() != 0;
 		}
 
 		return false;
