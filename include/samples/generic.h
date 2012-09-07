@@ -4,8 +4,6 @@
 #include "node.h"
 #include "timer.h"
 
-#include <lwsync/monitor.hpp>
-
 #include <chrono>
 #include <condition_variable>
 #include <functional>
@@ -32,13 +30,15 @@ class generator : public producer<T>
 {
 	std::function<T ()> d_gen_f;
 
-	lwsync::monitor<bool> d_awaken_m;
+	std::condition_variable d_awaken_cv;
+	std::mutex d_awaken_m;
+	bool d_awaken;
 
 public:
 	//!\param timer_r Timer that will signal when to produce a packet.
 	//!\param gen_f The functor to be called. The return value of this functor will be considered a packet.
 	//!\param name_r The name to give this node.
-	generator(timer& timer_r, const std::function<T ()>& gen_f, const std::string& name_r = "generator") : node(name_r), producer<T>(name_r, 1), d_gen_f(gen_f), d_awaken_m(false)
+	generator(timer& timer_r, const std::function<T ()>& gen_f, const std::string& name_r = "generator") : node(name_r), producer<T>(name_r, 1), d_gen_f(gen_f), d_awaken(false)
 	{
 		timer_r.listen(std::bind(&generator::timer_fired, this));
 	}
@@ -48,13 +48,17 @@ public:
 	//!\brief implementation of node::stopped().
 	virtual void stopped()
 	{
-		*d_awaken_m.access() = true;
+		std::unique_lock<std::mutex> ul(d_awaken_m);
+		d_awaken = true;
+		d_awaken_cv.notify_one();
 	}
 
 	//!\brief The function to pass to the timer as the listener.
 	virtual void timer_fired()
 	{
-		*d_awaken_m.access() = true;
+		std::unique_lock<std::mutex> ul(d_awaken_m);
+		d_awaken = true;
+		d_awaken_cv.notify_one();
 	}
 
 	//!\brief Implementation of producer::produce().
@@ -63,7 +67,11 @@ public:
 	//! When the timer fires, the generator functor is called and its return value is moved to the pipe.
 	virtual void produce()
 	{
-		*d_awaken_m.wait() = false;
+		{
+			std::unique_lock<std::mutex> ul(d_awaken_m);
+			d_awaken_cv.wait(ul, std::bind(std::equal_to<bool>(), std::ref(d_awaken), true));
+			d_awaken = false;
+		}
 
 		if(node::state() == state::started)
 		{
