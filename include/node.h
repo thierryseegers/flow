@@ -5,14 +5,13 @@
 #include "packet.h"
 #include "pipe.h"
 
-#include "synchronization.h"
-
 #include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
+#include <utility>
 
 //!\file node.h
 //!
@@ -54,6 +53,7 @@ enum type
 };
 
 }
+
 //!\brief Base class for a node's inlet or outlet.
 //!
 //! Pins are connected to one another through pipes.
@@ -62,7 +62,7 @@ template<typename T>
 class pin : public named
 {
 protected:
-	std::shared_ptr<synchronization::critical_resource<pipe<T>>> d_pipe_cr_sp; //!< Shared ownership of a pipe with the pin to which this pin is connected.
+	std::shared_ptr<std::pair<pipe<T>, std::unique_ptr<std::mutex>>> d_pipe_sp; //!< Shared ownership of a pipe with the pin to which this pin is connected.
 
 	friend class outpin<T>;
 
@@ -71,14 +71,14 @@ public:
 	pin(const std::string& name_r) : named(name_r) {}
 
 	//!\param o The pin to copy.
-	pin(const pin<T>& o) : named(o.name()), d_pipe_cr_sp(o.d_pipe_cr_sp) {}
+	pin(const pin<T>& o) : named(o.name()), d_pipe_sp(o.d_pipe_sp) {}
 
 	virtual ~pin() {}
 
 	//!\brief Disconnects this pin from its pipe.
 	virtual void disconnect()
 	{
-		d_pipe_cr_sp.reset();
+		d_pipe_sp.reset();
 	}
 };
 
@@ -91,14 +91,14 @@ class inpin : public pin<T>
 	std::condition_variable *d_transition_cv_p;
 	std::mutex *d_transition_m_p;
 
-	using pin<T>::d_pipe_cr_sp;
+	using pin<T>::d_pipe_sp;
 
 	//!\brief Disconnect this inpin.
 	virtual void disconnect()
 	{
 		{
-			auto pipe = d_pipe_cr_sp->access();
-			pipe->rename(pipe->input()->name() + "_to_" + "nothing");
+			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
+			d_pipe_sp->first.rename(d_pipe_sp->first.input()->name() + "_to_" + "nothing");
 		}
 
 		pin<T>::disconnect();
@@ -125,12 +125,12 @@ public:
 	//!\param name_r New name to give this inpin.
 	virtual std::string rename(const std::string& name_r)
 	{
-		if(d_pipe_cr_sp)
+		if(d_pipe_sp)
 		{
-			auto pipe = d_pipe_cr_sp->access();
-			if(pipe->input())
+			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
+			if(d_pipe_sp->first.input())
 			{
-				pipe->rename(pipe->input()->name() + "_to_" + name_r);
+				d_pipe_sp->first.rename(d_pipe_sp->first.input()->name() + "_to_" + name_r);
 			}
 		}
 
@@ -142,7 +142,13 @@ public:
 	//!\return \c false if there is no pipe or the pipe is empty, \c true otherwise.
  	virtual bool peek() const
 	{
-		return d_pipe_cr_sp ? d_pipe_cr_sp->const_access()->length() != 0 : false;
+		if(d_pipe_sp)
+		{
+			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
+			return d_pipe_sp->first.length();
+		}
+
+		return false;
 	}
 
 	//!\brief Extracts a packet from the pipe.
@@ -150,7 +156,13 @@ public:
 	//!\return The next packet to be consumed if the inpin is connected to a pipe and the pipe is not empty, empty pointer otherwise.
 	virtual std::unique_ptr<packet<T>> pop()
 	{
-		return d_pipe_cr_sp ? d_pipe_cr_sp->access()->pop() : std::unique_ptr<packet<T>>();
+		if(d_pipe_sp)
+		{
+			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
+			return d_pipe_sp->first.pop();
+		}
+
+		return std::unique_ptr<packet<T>>();
 	}
 
 	//!\brief Notifies this pin that a packet has been queued to the pipe.
@@ -170,14 +182,14 @@ public:
 template<typename T>
 class outpin : public pin<T>
 {
-	using pin<T>::d_pipe_cr_sp;
+	using pin<T>::d_pipe_sp;
 	
 	//!\brief Disconnect this outpin.
 	virtual void disconnect()
 	{
 		{
-			auto pipe = d_pipe_cr_sp->access();
-			pipe->rename(std::string("nothing") + "_to_" + pipe->output()->name());
+			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
+			d_pipe_sp->first.rename(std::string("nothing") + "_to_" + d_pipe_sp->first.output()->name());
 		}
 
 		pin<T>::disconnect();
@@ -194,33 +206,35 @@ class outpin : public pin<T>
 	virtual void connect(inpin<T>& inpin_r, const size_t max_length = 0, const size_t max_weight = 0)
 	{
 		// Disconnect this outpin from it's pipe, if it has one.
-		if(d_pipe_cr_sp)
+		if(d_pipe_sp)
 		{
 			disconnect();
 		}
 
-		if(inpin_r.pin<T>::d_pipe_cr_sp)
+		if(inpin_r.pin<T>::d_pipe_sp)
 		{
 			// The inpin already has a pipe, connect this outpin to it.
-			auto inpin_pipe = inpin_r.pin<T>::d_pipe_cr_sp->access();
-		
+			std::lock_guard<std::mutex> lg(*inpin_r.pin<T>::d_pipe_sp->second);
+			
+			pipe<T> &inpin_pipe = inpin_r.pin<T>::d_pipe_sp->first;
+
 			//... but first, disconnects it from it's other output pin.
-			if(inpin_pipe->input())
+			if(inpin_pipe.input())
 			{
-				inpin_pipe->input()->disconnect();
+				inpin_pipe.input()->disconnect();
 			}
 
-			inpin_pipe->rename(pin<T>::name() + "_to_" + inpin_r.pin<T>::name());
+			inpin_pipe.rename(pin<T>::name() + "_to_" + inpin_pipe.name());
 
 			// Overwrite the pipe's parameters with new ones.
-			inpin_pipe->cap_length(max_length);
-			inpin_pipe->cap_length(max_weight);
+			inpin_pipe.cap_length(max_length);
+			inpin_pipe.cap_length(max_weight);
 		}
 		else
 		{
 			// The inpin has no pipe, make a new one.
 			pipe<T> p(pin<T>::name() + "_to_" + inpin_r.pin<T>::name(), this, &inpin_r, max_length, max_weight);
-			d_pipe_cr_sp = inpin_r.pin<T>::d_pipe_cr_sp = std::make_shared<synchronization::critical_resource<pipe<T>>>(std::move(p)); 
+			d_pipe_sp = inpin_r.pin<T>::d_pipe_sp = std::make_shared<std::pair<pipe<T>, std::unique_ptr<std::mutex>>>(std::make_pair(std::move(p), std::unique_ptr<std::mutex>(new std::mutex()))); 
 		}
 	}
 
@@ -239,12 +253,12 @@ public:
 	//!\param name_r New name to give this outpin.
 	virtual std::string rename(const std::string& name_r)
 	{
-		if(d_pipe_cr_sp)
+		if(d_pipe_sp)
 		{
-			auto pipe = d_pipe_cr_sp->access();
-			if(pipe->output())
+			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
+			if(d_pipe_sp->first.output())
 			{
-				pipe->rename(name_r + "_to_" + pipe->output()->name());
+				d_pipe_sp->first.rename(name_r + "_to_" + d_pipe_sp->first.output()->name());
 			}
 		}
 
@@ -259,14 +273,14 @@ public:
 	//!\return true if the packet was successfully moved to the pipe, false otherwise.
 	virtual bool push(std::unique_ptr<packet<T>> packet_p)
 	{
-		if(!d_pipe_cr_sp) return false;
+		if(!d_pipe_sp) return false;
 
 		inpin<T>* inpin_p = 0;
 		{
-			auto pipe = d_pipe_cr_sp->access();
-			if(pipe->push(std::move(packet_p)))
+			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
+			if(d_pipe_sp->first.push(std::move(packet_p)))
 			{
-				inpin_p = pipe->output();
+				inpin_p = d_pipe_sp->first.output();
 			}
 		}
 
