@@ -57,9 +57,9 @@ public:
 		return d_next_index++;
 	}
 
-	//!brief Removes a previously added listener.
+	//!\brief Removes a previously added listener.
 	//!
-	//!\param listener A functor that was previously added.
+	//!\param token A value previously returned by \ref listen.
 	virtual void ignore(const size_t token)
 	{
 		std::lock_guard<std::mutex> lg(d_listeners_m);

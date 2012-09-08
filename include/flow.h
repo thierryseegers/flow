@@ -77,7 +77,7 @@ The transformer's output data finally goes to a consumer node.
 Should we need to monitor the data coming in from <tt>producer 2</tt>, we can \ref flow::samples::generic::tee "tee" it to another consumer node.
 This new consumer node could save all the data it receives to a file or log it in real-time without preserving it.
 The \ref flow::samples::generic::tee "tee" transformer node is an example of a concrete node that duplicates incoming data to all its outputs.
-It is provided in the framework and can be found in the \ref flow::samples namespace.
+It is provided in the framework and can be found in the \ref flow::samples::generic namespace.
 
 \image html ./introduction_graph_tee.png "Data flow for a graph with a tee transformer node"
 
@@ -86,32 +86,11 @@ It is provided in the framework and can be found in the \ref flow::samples names
 This implementation:
  - uses templates heavily.
  - requires RTTI.
- - depends on the following C++11's language features:
-  - auto keyword
-  - lambda expression
-  - r-value reference
-  - move constructor and std::move function
- - depends on the following C++11 headers:
-  - \c \<chrono\>
-  - \c \<function\>
-  - \c \<memory\>
-  - \c \<thread\>
-  - \c \<utility\>
- - depends on a thirdparty library, included in the source package. See \ref thirdparty.
- - has been tested with Visual Studio 2012 RC and GCC 4.7.0.
+ - depends on many of C++11's language features and library headers.
+ - has been tested with Visual Studio 2012 RC, GCC 4.6.3 and GCC 4.7.0.
  - uses <a href="http://www.cmake.org">CMake</a> as the build and packaging tool. As a user of flow, you do not need to build anything since it is only headers.
  - uses <a href="http://www.stack.nl/~dimitri/doxygen/index.html">Doxygen</a> to generate its documentation (and, optionally, <a href="http://www.graphviz.org/">Graphviz's dot</a>).
 
-\section thirdparty Use of thirdparty libraries
-
- - <a href="http://www.codeproject.com/KB/threads/lwsync.aspx">lwsync</a>: node.h 
-	uses lwsync::critical_resource<T> and lwsync::monitor<T> to perform resource synchronization.
-	This headers-only library is already included in the source package.
-	You do not need to install it.
-	lwsync has been modified to:
-	  - work with C++11's mutex and condition_variable.
-	  - add a <a href="http://www2.research.att.com/~bs/C++0xFAQ.html#rval">move constructor</a> to lwsync::critical_resource<T>.
-	
 \section principles Design principles
 
 \subsection use_unique_ptr Use of std::unique_ptr
@@ -120,21 +99,28 @@ When flowing through the graph, \ref flow::packet "data packets" are wrapped in 
 This helps memory managment tremendously and enforces the idea that, at any point in time, 
 only a single entity -pipe or node- is responsible for a data packet.
 
-\subsection node_state Node state
-
-A node can be in one of three states: \ref flow::state::paused "paused", \ref flow::state::started "started" or \ref flow::state::stopped "stopped".
-Before a node can transition to a new state, it must be added to a graph.
-Transitioning between these states is done by calling a corresponding member function of the \ref flow::graph "graph" class.
-For this relase, all nodes in a graph are always in the same state.
-Regardless of the nodes' state, nodes can be added to and removed from a graph at any time and can be connected to and disconnected from another node at any time.
-
 \subsection thread_per_node A thread per node
 
 flow is multi-threaded in that the \ref flow::graph "graph" assigns a thread of execution to each of its nodes.
 The lifetime of these threads is taken care by \ref flow::graph "graph".
 As a library user, the only mutli-threaded code you would write is whatever a node would require to perform its work.
 
-\subsection consumption_time Consumption time
+\subsection node_state Node state
+
+A node can be in one of three states: \ref flow::state::paused "paused", \ref flow::state::started "started" or \ref flow::state::stopped "stopped".
+When instantiated, a node is in the \ref flow::state::paused "paused" state.
+When a node is in the \ref flow::state::started "started" state, a thread of execution is created for it and it is actively consuming and/or producing packets.
+When a node is in the \ref flow::state::paused "paused", it is no longer consuming and/or producing packets.
+If a concrete node class has internal state, that state should be frozen such that, when the node is re-started, packet processing will continue as if the node had not been paused.
+When a node is in the \ref flow::state::stopped "stopped" state, it's thread of execution is joined.
+If a concrete node class has internal state, that state should be reset.
+
+Before a node can transition to a new state, it must be added to a graph.
+Transitioning between these states is done by calling a corresponding member function of the \ref flow::graph "graph" class.
+For this relase, all nodes in a graph are always in the same state.
+Regardless of the nodes' state, nodes can be added to and removed from a graph at any time and can be connected to and disconnected from another node at any time.
+
+\subsection consumption_time Packet consumption time
 
 Consumption time is the time at which a data packet can be set to be consumed by a consumer node.
 When a data packet with an assigned consumption time arrives at a consumer node and the consumption time is:
@@ -146,8 +132,8 @@ Data packets with no consumption time are consumed as soon as they reach a consu
 
 \subsection named_things Named building blocks
 
-The \ref flow::node "node" base class derives from \ref flow::named named.
-That makes all node concrete classes required to be given a name too.
+All classes in flow, including the \ref flow::node "node" base class, derive from \ref flow::named "named".
+That makes all concrete node classes required to be given a name too.
 This feature serves two purposes:
  - nodes can be refered to by their names when building a graph, improving code readability greatly.
  - helps debugging, especially since all pins and pipes are also named and have names automatically generated based on what they are connected to.
@@ -164,7 +150,7 @@ They are found in the \ref flow::samples::generic and \ref flow::samples::math n
 
 \section thanks Thanks
 
- - Volodymyr Frolov, author of the lwsync library used in this project.
+ - Volodymyr Frolov, author of the <a href="http://www.codeproject.com/KB/threads/lwsync.aspx">lwsync</a> library used in this project until version 3.0.
  - Dušan Rodina, maker of <a href="http://www.softwareideas.net/en/Default.aspx">Software Ideas Modeler</a>.
    Modeler was used to create the graph diagrams in the \ref introduction.
 
