@@ -523,13 +523,12 @@ bool max_length(args_t args)
 		sp_pu->push(0);
 	}
 
-	int n = 0;
-	while(sp_po->pop(false))
+	for(int i = 0; i != max_length; ++i)
 	{
-		++n;
+		sp_po->pop();
 	}
 
-	if(n != max_length)
+	if(sp_po->peek())
 	{
 		return false;
 	}
@@ -558,13 +557,12 @@ bool max_weight(args_t args)
 		sp_pu->push('a');
 	}
 
-	int n = 0;
-	while(sp_po->pop(false))
+	for(int i = 0; i != max_weight; ++i)
 	{
-		++n;
+		sp_po->pop();
 	}
 
-	if(n != max_weight)
+	if(sp_po->peek())
 	{
 		return false;
 	}

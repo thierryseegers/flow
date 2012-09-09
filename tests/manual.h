@@ -49,15 +49,17 @@ public:
 		d_incoming_cv.notify_one();
 	}
 
-	virtual std::unique_ptr<flow::packet<T>> pop(bool wait = true)
+	virtual std::unique_ptr<flow::packet<T>> pop()
 	{
 		std::unique_lock<std::mutex> ul(d_incoming_m);
-		if(wait)
-		{
-			d_incoming_cv.wait(ul, [this](){ return this->flow::consumer<T>::input(0).peek(); });
-		}
+		d_incoming_cv.wait(ul, [this](){ return this->flow::consumer<T>::input(0).peek(); });
 
 		return flow::consumer<T>::input(0).pop();
+	}
+
+	virtual bool peek()
+	{
+		return flow::consumer<T>::input(0).peek();
 	}
 };
 
