@@ -36,43 +36,36 @@ public:
 	//! They are then all summed and the sum is moved to the output.
 	virtual void ready(size_t n)
 	{
-		// Assume a packet is ready at all inputs.
-		bool all = true;
-
-		// Confirm.
-		for(size_t i = 0; i != consumer<T>::ins() && all; ++i)
+		// Check that a packet is ready at all inputs. If not, return and try again when another packet arrives.
+		for(size_t i = 0; i != consumer<T>::ins(); ++i)
 		{
 			if(!consumer<T>::input(i).peek())
 			{
-				all = false;
+				return;
 			}
 		}
 
-		// If it happens to be the case.
-		if(all)
+		// Gather the terms in a container.
+		std::vector<std::unique_ptr<packet<T>>> terms;
+
+		for(auto& inpin : consumer<T>::inputs())
 		{
-			// Gather the terms in a container.
-			std::vector<std::unique_ptr<packet<T>>> terms;
-
-			for(auto& inpin : consumer<T>::inputs())
-			{
-				terms.emplace_back(move(inpin.pop()));
-			}
-
-			// Start the sum as equal to the first term.
-			T sum(terms[0]->data());
-
-			// Add to the sum the value of all other packets.
-			std::for_each(terms.begin() + 1, terms.end(), [&sum](const std::unique_ptr<packet<T>>& packet_up_r){
-				sum += packet_up_r->data();
-			});
-
-			// Make a packet with the sum data.
-			std::unique_ptr<packet<T>> sum_up(new packet<T>(sum));
-
-			// Output it.
-			producer<T>::output(0).push(std::move(sum_up));
+			terms.emplace_back(move(inpin.pop()));
 		}
+
+		// Start the sum as equal to the first term.
+		T sum(terms[0]->data());
+
+		// Add to the sum the value of all other packets.
+		std::for_each(terms.begin() + 1, terms.end(), [&sum](const std::unique_ptr<packet<T>>& packet_up_r){
+			sum += packet_up_r->data();
+		});
+
+		// Make a packet with the sum data.
+		std::unique_ptr<packet<T>> sum_up(new packet<T>(sum));
+
+		// Output it.
+		producer<T>::output(0).push(std::move(sum_up));
 	}
 };
 

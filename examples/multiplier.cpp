@@ -24,53 +24,46 @@ public:
 
 	virtual void ready(size_t n)
 	{
-		// Assume a packet is ready at all inputs.
-		bool all = true;
-
-		// Confirm.
-		for(size_t i = 0; i != flow::consumer<T>::ins() && all; ++i)
+		// Check that a packet is ready at all inputs. If not, return and try again when another packet arrives.
+		for(size_t i = 0; i != flow::consumer<T>::ins(); ++i)
 		{
 			if(!flow::consumer<T>::input(i).peek())
 			{
-				all = false;
+				return;
 			}
 		}
 
-		// If it happens to be the case.
-		if(all)
+		// Gather the terms in a container.
+		vector<unique_ptr<flow::packet<T>>> terms;
+
+		for(size_t i = 0; i != flow::consumer<T>::ins(); ++i)
 		{
-			// Gather the terms in a container.
-			vector<unique_ptr<flow::packet<T>>> terms;
-
-			for(size_t i = 0; i != flow::consumer<T>::ins(); ++i)
-			{
-				terms.emplace_back(move(flow::consumer<T>::input(i).pop()));
-			}
-
-			// Start the product as equal to the first term.
-			T product(terms[0]->data());
-
-			// Multiply by the value of all other packets.
-			for_each(terms.begin() + 1, terms.end(), [&product](const unique_ptr<flow::packet<T>>& packet_up_r){
-				product *= packet_up_r->data();
-			});
-
-			// Using a stringstream, aggregate all the factors and the product to form the multiplication expression.
-			stringstream ss;
-			ss << terms[0]->data();
-			for_each(terms.begin() + 1, terms.end(), [&ss](const unique_ptr<flow::packet<T>>& packet_up_r){
-				ss << " * " << packet_up_r->data();
-			});
-			ss << " = " << product;
-
-			// ss now looks like "a * b [* x] = p".
-
-			// Make a packet with the expression.
-			unique_ptr<flow::packet<string>> p(new flow::packet<string>(ss.str()));
-
-			// Output it.
-			flow::producer<string>::output(0).push(move(p));
+			terms.emplace_back(move(flow::consumer<T>::input(i).pop()));
 		}
+
+		// Start the product as equal to the first term.
+		T product(terms[0]->data());
+
+		// Multiply by the value of all other packets.
+		for_each(terms.begin() + 1, terms.end(), [&product](const unique_ptr<flow::packet<T>>& packet_up_r){
+			product *= packet_up_r->data();
+		});
+
+		// Using a stringstream, aggregate all the factors and the product to form the multiplication expression.
+		stringstream ss;
+		ss << terms[0]->data();
+		for_each(terms.begin() + 1, terms.end(), [&ss](const unique_ptr<flow::packet<T>>& packet_up_r){
+			ss << " * " << packet_up_r->data();
+		});
+		ss << " = " << product;
+
+		// ss now looks like "a * b [* x] = p".
+
+		// Make a packet with the expression.
+		unique_ptr<flow::packet<string>> p(new flow::packet<string>(ss.str()));
+
+		// Output it.
+		flow::producer<string>::output(0).push(move(p));
 	}
 };
 
