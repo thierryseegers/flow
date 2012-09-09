@@ -101,7 +101,7 @@ public:
 		remove(sp_node->name());
 	}
 
-	//!\brief Connect two nodes from the graph together.
+	//!\brief Connects two nodes' pins from the graph together.
 	//!
 	//!\param p_name_r Name of the producing node.
 	//!\param p_pin The index of the producing node's output pin to connect.
@@ -127,7 +127,7 @@ public:
 		return true;
 	}
 
-	//!\brief Connect two nodes from the graph together.
+	//!\brief Connects two nodes' pins from the graph together.
 	//!
 	//!\param sp_p The producing node.
 	//!\param p_pin The index of the producing node's output pin to connect.
@@ -153,7 +153,7 @@ public:
 		return true;
 	}
 
-	//!\brief Disconnect a node's pin.
+	//!\brief Disconnects a node's pin.
 	//!
 	//!\param sp_p The node.
 	//!\param p_pin The pin's index.
@@ -165,7 +165,7 @@ public:
 		connections[sp_p->name()][p_pin] = std::make_pair(std::string(), 0);
 	}
 
-	//!\brief Disconnect a node's pin.
+	//!\brief Disconnects a node's pin.
 	//!
 	//!\param sp_c The node.
 	//!\param c_pin The pin's index.

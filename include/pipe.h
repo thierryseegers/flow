@@ -72,7 +72,7 @@ public:
 		return d_output_p;
 	}
 
-	//!\brief The pipe's current length. The number of bytes in the pipe.
+	//!\brief The pipe's current length. The number of packets in the pipe.
 	virtual size_t length() const
 	{
 		return d_packets.size();
@@ -121,7 +121,7 @@ public:
 		return s;
 	}
 
-	//!\brief Queue a packet in the pipe.
+	//!\brief Queues a packet in the pipe.
 	//!
 	//! Used by the producer node to move a packet it produced to the pipe.
 	//! If the packet does not fit in the pipe, it will not be moved.

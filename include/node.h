@@ -24,7 +24,7 @@ namespace flow
 {
 
 // Forward declarations.
-
+//!\cond
 template<typename T>
 class outpin;
 
@@ -35,6 +35,7 @@ template<typename T>
 class producer;
 
 class graph;
+//!\endcond
 
 //!\namespace flow::state
 //!
@@ -397,12 +398,11 @@ public:
 }
 //!\endcond
 
-template<typename T>
-class consumer;
-
 //!\brief Base class from which concrete pure producers derive.
 //!
 //! Concrete transformers should derive from flow::transformer.
+//!
+//!\tparam T The type of data this node produces.
 template<typename T>
 class producer : public virtual node, public detail::producer
 {
@@ -526,6 +526,8 @@ public:
 //!\brief Base class from which concrete pure consumers derive.
 //!
 //! Concrete transformers should derive from flow::transformer.
+//!
+//!\tparam T The type of data this node consumes.
 template<typename T>
 class consumer : public virtual node, public detail::consumer
 {
@@ -660,6 +662,9 @@ public:
 };
 
 //!\brief Base class from which concrete transformers derive.
+//!
+//!\tparam C The type of data this node consumes.
+//!\tparam P The type of data this node produces.
 template<typename C, typename P>
 class transformer : public consumer<C>, public producer<P>, public detail::transformer
 {
