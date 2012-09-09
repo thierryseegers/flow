@@ -14,7 +14,7 @@ add_subdirectory(examples)
 add_subdirectory(include)
 add_subdirectory(tests)
 
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION .)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION . FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY ${PROJECT_BINARY_DIR}/documentation/htdocs DESTINATION documentation)
 
 set(CPACK_GENERATOR ZIP)
