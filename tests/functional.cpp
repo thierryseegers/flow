@@ -502,6 +502,75 @@ bool const_add<string>(args_t args)
 	return true;
 }
 
+bool max_length(args_t args)
+{
+	size_t max_length = stoul(args["length"]);
+
+	auto sp_pu = make_shared<pusher<int>>();
+	auto sp_po = make_shared<popper<int>>();
+
+	flow::graph g;
+
+	g.add(sp_pu, "pusher");
+	g.add(sp_po, "popper");
+
+	g.connect<int>(sp_pu, 0, sp_po, 0, max_length);
+
+	g.start();
+
+	for(int i = 0; i != max_length + 1; ++i)
+	{
+		sp_pu->push(0);
+	}
+
+	int n = 0;
+	while(sp_po->pop(false))
+	{
+		++n;
+	}
+
+	if(n != max_length)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool max_weight(args_t args)
+{
+	size_t max_weight = stoul(args["weight"]);
+
+	auto sp_pu = make_shared<pusher<char>>();
+	auto sp_po = make_shared<popper<char>>();
+
+	flow::graph g;
+
+	g.add(sp_pu, "pusher");
+	g.add(sp_po, "popper");
+
+	g.connect<char>(sp_pu, 0, sp_po, 0, 0, max_weight);
+
+	g.start();
+
+	for(int i = 0; i != max_weight + 1; ++i)
+	{
+		sp_pu->push('a');
+	}
+
+	int n = 0;
+	while(sp_po->pop(false))
+	{
+		++n;
+	}
+
+	if(n != max_weight)
+	{
+		return false;
+	}
+
+	return true;
+}
 
 int main(int argc, char* argv[])
 {
@@ -556,6 +625,16 @@ int main(int argc, char* argv[])
 	{
 		const char* types[] = { "type", "count" };
 		b = const_add<void>(make_args(types, &argv[2], argc - 2));
+	}
+	else if(strcmp(argv[1], "max_length") == 0)
+	{
+		const char* types[] = { "length" };
+		b = max_length(make_args(types, &argv[2], argc - 2));
+	}
+	else if(strcmp(argv[1], "max_weight") == 0)
+	{
+		const char* types[] = { "weight" };
+		b = max_weight(make_args(types, &argv[2], argc - 2));
 	}
 
 	return b ? 0 : 1;

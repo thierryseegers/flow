@@ -22,12 +22,12 @@ class inpin;
 template<typename T>
 class outpin;
 
-//!\brief Carries packets from node to node on a FIFO basis.
+//!\brief Carries packets from one node to another node on a FIFO basis.
 //!
 //! Packets will accumulate in pipes if the node at the consuming end does not consume them fast enough.
 //! If packet accumulation is expected but memory usage is a concern, length and weight can be specified.
-//! Packet accumulation should be intermittent rather than constant or memory usage will grow at the rate of accumulation.
-//! A graph that produces more data than it consumes is unbalanced and should be modified.
+//! If a pipe has reached it's length and weight limit, pushed packets will instead be discarded.
+//! A graph that produces more data than it consumes is unbalanced and should be adjusted.
 template<typename T>
 class pipe : public named
 {
@@ -47,8 +47,8 @@ public:
 	//!\param name_r Name of this pipe. This will be typically generated from the names of the producing and consuming nodes.
 	//!\param output_p The output pin of the producing node.
 	//!\param input_p The input pin of the consuming node.
-	//!\param max_length The maximum number of nodes this pipe will carry.
-	//!\param max_weight The maximum number of bytes this pipe will carry.
+	//!\param max_length The maximum number of nodes this pipe will carry. Do not set or set to 0 for uncapped length.
+	//!\param max_weight The maximum number of bytes this pipe will carry. Do not set or set to 0 for uncapped weight.
 	pipe(const std::string& name_r, outpin<T> *output_p, inpin<T> *input_p, const size_t max_length = 0, const size_t max_weight = 0)
 		: named(name_r), d_input_p(output_p), d_output_p(input_p), d_max_length(max_length), d_max_weight(max_weight), d_weight(0)
 	{}
@@ -79,6 +79,8 @@ public:
 	}
 
 	//!\brief The maximum number of packets this pipe will carry.
+	//!
+	//! If 0, then uncapped.
 	virtual size_t max_length() const
 	{
 		return d_max_length;
@@ -91,6 +93,8 @@ public:
 	}
 
 	//!\brief The maximum number of bytes this pipe will carry.
+	//!
+	//! If 0, then uncapped.
 	virtual size_t max_weight() const
 	{
 		return d_max_weight;

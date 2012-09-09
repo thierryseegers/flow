@@ -107,10 +107,12 @@ public:
 	//!\param p_pin The index of the producing node's output pin to connect.
 	//!\param c_name_r Name of the consuming node.
 	//!\param c_pin The index of the consuming node's input pin to connect.
+	//!\param max_length The maximum length to give the pipe. Do not set or set to 0 for uncapped length.
+	//!\param max_weight The maximum weight to give the pipe. Do not set or set to 0 for uncapped weight.
 	//!
 	//!\return False if the nodes had not yet been added to the graph.
 	template<typename T>
-	bool connect(const std::string& p_name_r, const size_t p_pin, const std::string& c_name_r, const size_t c_pin)
+	bool connect(const std::string& p_name_r, const size_t p_pin, const std::string& c_name_r, const size_t c_pin, const size_t max_length = 0, const size_t max_weight = 0)
 	{
 		nodes_t::iterator p, c;
 		
@@ -120,7 +122,7 @@ public:
 			return false;
 		}
 		
-		std::dynamic_pointer_cast<producer<T>>(p->second)->connect(p_pin, std::dynamic_pointer_cast<consumer<T>>(c->second).get(), c_pin);
+		std::dynamic_pointer_cast<producer<T>>(p->second)->connect(p_pin, std::dynamic_pointer_cast<consumer<T>>(c->second).get(), c_pin, max_length, max_weight);
 
 		connections[p_name_r][p_pin] = std::make_pair(c_name_r, c_pin);
 
@@ -133,10 +135,12 @@ public:
 	//!\param p_pin The index of the producing node's output pin to connect.
 	//!\param sp_c The consuming node.
 	//!\param c_pin The index of the consuming node's input pin to connect.
+	//!\param max_length The maximum length to give the pipe. Do not set or set to 0 for uncapped length.
+	//!\param max_weight The maximum weight to give the pipe. Do not set or set to 0 for uncapped weight.
 	//!
 	//!\return False if the nodes had not yet been added to the graph.
 	template<typename T>
-	bool connect(std::shared_ptr<flow::producer<T>> sp_p, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_c, const size_t c_pin)
+	bool connect(std::shared_ptr<flow::producer<T>> sp_p, const size_t p_pin, std::shared_ptr<flow::consumer<T>> sp_c, const size_t c_pin, const size_t max_length = 0, const size_t max_weight = 0)
 	{
 		nodes_t::iterator i;
 		
@@ -146,7 +150,7 @@ public:
 			return false;
 		}
 		
-		sp_p->connect(p_pin, sp_c.get(), c_pin);
+		sp_p->connect(p_pin, sp_c.get(), c_pin, max_length, max_weight);
 
 		connections[sp_p->name()][p_pin] = std::make_pair(sp_c->name(), c_pin);
 

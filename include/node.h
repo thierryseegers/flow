@@ -202,8 +202,8 @@ class outpin : public pin<T>
 	//! If the input pin is already connected to a pipe, it will be reused.
 	//!
 	//!\param inpin_r The inpin to which to connect this outpin.
-	//!\param max_length The maximum length to give the pipe.
-	//!\param max_weight The maximum weight to give the pipe.
+	//!\param max_length The maximum length to give the pipe. Do not set or set to 0 for uncapped length.
+	//!\param max_weight The maximum weight to give the pipe. Do not set or set to 0 for uncapped weight.
 	virtual void connect(inpin<T>& inpin_r, const size_t max_length = 0, const size_t max_weight = 0)
 	{
 		// Disconnect this outpin from it's pipe, if it has one.
@@ -271,7 +271,7 @@ public:
 	//! Attempts to move the packet on the pipe.
 	//! If the pipe has reached capacity, the call to pipe::push will fail and packet_p will remain valid.
 	//!
-	//!\return true if the packet was successfully moved to the pipe, false otherwise.
+	//!\return \c true if the packet was successfully moved to the pipe, false otherwise.
 	virtual bool push(std::unique_ptr<packet<T>> packet_p)
 	{
 		if(!d_pipe_sp) return false;
@@ -290,7 +290,7 @@ public:
 			inpin_p->incoming();
 		}
 
-		return inpin_p == 0;
+		return inpin_p != 0;
 	}
 };
 
@@ -415,9 +415,11 @@ protected:
 	//!\param p_pin The index of this node's output pin.
 	//!\param consumer_p Pointer to the consumer node to conenct to.
 	//!\param c_pin The index of the consumer node's input pin.
-	virtual void connect(size_t p_pin, consumer<T>* consumer_p, size_t c_pin)
+	//!\param max_length The maximum length to give the pipe. Do not set or set to 0 for uncapped length.
+	//!\param max_weight The maximum weight to give the pipe. Do not set or set to 0 for uncapped weight.
+	virtual void connect(size_t p_pin, consumer<T>* consumer_p, size_t c_pin, const size_t max_length = 0, const size_t max_weight = 0)
 	{
-		output(p_pin).connect(consumer_p->input(c_pin));
+		output(p_pin).connect(consumer_p->input(c_pin), max_length, max_weight);
 	}
 
 	//!\brief Disconnect an outpin of this producer.
