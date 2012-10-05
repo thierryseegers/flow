@@ -3,8 +3,6 @@ file(GLOB sources *.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR}/include) 
 
-add_definitions(-DLWSYNC_HAS_CPP11)
-
 if(CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_CXX_FLAGS -std=c++0x)
 	add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # Required to enable this_thread:: sleep_for and ::sleep_until on certain distros.
