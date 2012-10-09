@@ -74,7 +74,7 @@ The transformer's output data finally goes to a consumer node.
 
 \image html ./introduction_graph_simple.png "Data flow for a simple graph"
 
-Should we need to monitor the data coming in from <tt>producer 2</tt>, we can \ref flow::samples::generic::tee "tee" it to another consumer node.
+If we need to monitor the data coming in from <tt>producer 2</tt>, we can \ref flow::samples::generic::tee "tee" it to another consumer node.
 This new consumer node could save all the data it receives to a file or log it in real-time without preserving it.
 The \ref flow::samples::generic::tee "tee" transformer node is an example of a concrete node that duplicates incoming data to all its outputs.
 It is provided in the framework and can be found in the \ref flow::samples::generic namespace.
@@ -88,7 +88,7 @@ This implementation:
  - requires RTTI.
  - depends on many of C++11's language features and library headers.
  - has been tested with Visual Studio 2012 RC, GCC 4.6.3 and GCC 4.7.0.
- - uses <a href="http://www.cmake.org">CMake</a> as the build and packaging tool. As a user of flow, you do not need to build anything since it is only headers.
+ - uses <a href="http://www.cmake.org">CMake</a> as the build and packaging tool. As a user of flow, you do not need to build anything it consists only in header files.
  - uses <a href="http://www.stack.nl/~dimitri/doxygen/index.html">Doxygen</a> to generate its documentation (and, optionally, <a href="http://www.graphviz.org/">Graphviz's dot</a>).
 
 \section principles Design principles
@@ -96,8 +96,7 @@ This implementation:
 \subsection use_unique_ptr Use of std::unique_ptr
 
 When flowing through the graph, \ref flow::packet "data packets" are wrapped in std::unique_ptr. 
-This helps memory managment tremendously and enforces the idea that, at any point in time, 
-only a single entity -pipe or node- is responsible for a data packet.
+This helps memory managment tremendously and enforces the idea that, at any point in time, only a single entity -pipe or node- is responsible for a data packet.
 
 \subsection thread_per_node A thread per node
 

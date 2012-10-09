@@ -1,4 +1,4 @@
-# This is somehwhat of a "dummy" target to put all the headers of the flow library in one place rather than have all projects hold references to them.
+# This is somewhat of a "dummy" target to put all the headers of the flow library in one place rather than have all projects hold references to them.
 
 file(GLOB headers ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 file(GLOB samples ${CMAKE_CURRENT_SOURCE_DIR}/samples/*.h)
