@@ -85,9 +85,8 @@ It is provided in the framework and can be found in the \ref flow::samples::gene
 
 This implementation:
  - uses templates heavily.
- - requires RTTI.
  - depends on many of C++11's language features and library headers.
- - has been tested with Visual Studio 2012 RC, GCC 4.6.3 and GCC 4.7.0.
+ - has been tested with Visual Studio 2012, GCC 4.6.3 and Xcode 4.5.2.
  - uses <a href="http://www.cmake.org">CMake</a> as the build and packaging tool. As a user of flow, you do not need to build anything it consists only in header files.
  - uses <a href="http://www.stack.nl/~dimitri/doxygen/index.html">Doxygen</a> to generate its documentation (and, optionally, <a href="http://www.graphviz.org/">Graphviz's dot</a>).
 
