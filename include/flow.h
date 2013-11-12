@@ -45,13 +45,7 @@
 
 \mainpage flow
 
-\li \ref introduction
-\li \ref considerations
-\li \ref principles
-\li \ref samples
-\li \ref examples
-\li \ref thanks
-\li \ref license
+\tableofcontents
 
 \section introduction Introduction
 
