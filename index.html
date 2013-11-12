@@ -79,16 +79,23 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">flow </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><ul>
-<li><a class="el" href="index.html#introduction">Introduction</a> </li>
-<li><a class="el" href="index.html#considerations">Technical considerations</a> </li>
-<li><a class="el" href="index.html#principles">Design principles</a> </li>
-<li><a class="el" href="index.html#samples">Samples concrete nodes</a> </li>
-<li><a class="el" href="index.html#examples">Examples</a> </li>
-<li><a class="el" href="index.html#thanks">Thanks</a> </li>
-<li><a class="el" href="index.html#license">License</a></li>
+<div class="toc"><h3>Table of Contents</h3>
+<ul><li class="level1"><a href="#introduction">Introduction</a></li>
+<li class="level1"><a href="#considerations">Technical considerations</a></li>
+<li class="level1"><a href="#principles">Design principles</a><ul><li class="level2"><a href="#use_unique_ptr">Use of std::unique_ptr</a></li>
+<li class="level2"><a href="#thread_per_node">A thread per node</a></li>
+<li class="level2"><a href="#node_state">Node state</a></li>
+<li class="level2"><a href="#consumption_time">Packet consumption time</a></li>
+<li class="level2"><a href="#named_things">Named building blocks</a></li>
 </ul>
-<h1><a class="anchor" id="introduction"></a>
+</li>
+<li class="level1"><a href="#samples">Samples concrete nodes</a></li>
+<li class="level1"><a href="#examples">Examples</a></li>
+<li class="level1"><a href="#thanks">Thanks</a></li>
+<li class="level1"><a href="#license">License</a></li>
+</ul>
+</div>
+<div class="textblock"><h1><a class="anchor" id="introduction"></a>
 Introduction</h1>
 <p>flow is a headers-only <a href="http://en.wikipedia.org/wiki/C%2B%2B0x">C++11</a> framework which provides the building blocks for streaming data packets through a graph of data-transforming nodes. Note that this library has nothing to do with computer networking. In the context of this framework, a data packet is a slice of a data stream. A <a class="el" href="classflow_1_1graph.html">flow::graph</a> will typically be composed of <a class="el" href="classflow_1_1producer.html">producer nodes</a>, <a class="el" href="classflow_1_1transformer.html">transformer nodes</a> and <a class="el" href="classflow_1_1consumer.html">consumer nodes</a>. A data packets is produced by a single producer node, can later go through any number of transformer nodes and is finally consumed by a single consumer node. Nodes are connected to one another by <a class="el" href="classflow_1_1pipe.html">pipes</a> attached to their <a class="el" href="classflow_1_1inpin.html">input pins</a> and <a class="el" href="classflow_1_1outpin.html">output pins</a>. The graph and base node classes already provide the necessary API to build a graph by connecting nodes together and to run the graph. As a library user, you are only expected to write concrete node classes that perform the tasks you require.</p>
 <p>Here's an example of a simple graph. The two producers nodes could be capturing data from some hardware or be generating a steady stream of data on their own. The transformer node processes the data coming in from both producers. The transformer's output data finally goes to a consumer node.</p>
@@ -181,7 +188,7 @@ DEALINGS IN THE SOFTWARE.
 </pre> </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 12 2013 15:16:26 for flow by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Nov 12 2013 15:35:42 for flow by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
