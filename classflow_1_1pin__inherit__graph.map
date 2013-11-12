@@ -1,0 +1,5 @@
+<map id="flow::pin&lt; T &gt;" name="flow::pin&lt; T &gt;">
+<area shape="rect" id="node5" href="$classflow_1_1inpin.html" title="Object that represents a node inlet." alt="" coords="5,155,123,181"/>
+<area shape="rect" id="node7" href="$classflow_1_1outpin.html" title="Object that represents a node outlet." alt="" coords="147,155,272,181"/>
+<area shape="rect" id="node2" href="$classflow_1_1named.html" title="Base class for objects that are named." alt="" coords="89,5,183,32"/>
+</map>

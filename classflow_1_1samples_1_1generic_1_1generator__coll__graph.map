@@ -1,0 +1,6 @@
+<map id="flow::samples::generic::generator&lt; T &gt;" name="flow::samples::generic::generator&lt; T &gt;">
+<area shape="rect" id="node2" href="$classflow_1_1producer.html" title="Base class from which concrete pure producers derive." alt="" coords="32,155,173,181"/>
+<area shape="rect" id="node4" href="$classflow_1_1node.html" title="Base class common to all nodes." alt="" coords="10,80,93,107"/>
+<area shape="rect" id="node6" href="$classflow_1_1named.html" title="Base class for objects that are named." alt="" coords="5,5,99,32"/>
+<area shape="rect" id="node8" href="$classdetail_1_1producer.html" title="producer" alt="" coords="118,80,191,107"/>
+</map>

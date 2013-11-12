@@ -1,0 +1,10 @@
+<map id="flow::samples::generic::delay&lt; T &gt;" name="flow::samples::generic::delay&lt; T &gt;">
+<area shape="rect" id="node2" href="$classflow_1_1transformer.html" title="flow::transformer\&lt;\l T, T \&gt;" alt="" coords="177,230,311,271"/>
+<area shape="rect" id="node4" href="$classflow_1_1consumer.html" title="Base class from which concrete pure consumers derive." alt="" coords="171,155,317,181"/>
+<area shape="rect" id="node6" href="$classflow_1_1node.html" title="Base class common to all nodes." alt="" coords="117,80,200,107"/>
+<area shape="rect" id="node12" href="$classflow_1_1producer.html" title="Base class from which concrete pure producers derive." alt="" coords="5,155,147,181"/>
+<area shape="rect" id="node8" href="$classflow_1_1named.html" title="Base class for objects that are named." alt="" coords="111,5,205,32"/>
+<area shape="rect" id="node10" href="$classdetail_1_1consumer.html" title="consumer" alt="" coords="225,80,303,107"/>
+<area shape="rect" id="node15" href="$classdetail_1_1producer.html" title="producer" alt="" coords="19,80,92,107"/>
+<area shape="rect" id="node17" href="$classdetail_1_1transformer.html" title="detail::transformer" alt="" coords="341,155,472,181"/>
+</map>

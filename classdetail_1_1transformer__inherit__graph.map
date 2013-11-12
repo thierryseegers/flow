@@ -1,0 +1,8 @@
+<map id="transformer" name="transformer">
+<area shape="rect" id="node3" href="$classflow_1_1transformer.html" title="Base class from which concrete transformers derive." alt="" coords="144,38,277,79"/>
+<area shape="rect" id="node5" href="$classflow_1_1transformer.html" title="flow::transformer\&lt;\l T, T \&gt;" alt="" coords="144,103,277,145"/>
+<area shape="rect" id="node7" href="$classflow_1_1samples_1_1generic_1_1delay.html" title="Concrete transformer that adds a delay to a packet&#39;s consumption time." alt="" coords="325,5,480,46"/>
+<area shape="rect" id="node9" href="$classflow_1_1samples_1_1generic_1_1tee.html" title="Concrete transformer that clones one input packet to multiple output packets." alt="" coords="325,70,480,111"/>
+<area shape="rect" id="node11" href="$classflow_1_1samples_1_1math_1_1adder.html" title="Concrete transformer that uses operator+= to sum input packets." alt="" coords="331,135,474,177"/>
+<area shape="rect" id="node13" href="$classflow_1_1samples_1_1math_1_1const__adder.html" title="Concrete transformer that uses operator+= to add a constant value to input packets." alt="" coords="331,201,474,242"/>
+</map>

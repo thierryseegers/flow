@@ -1,0 +1,11 @@
+<map id="flow::producer&lt; T &gt;" name="flow::producer&lt; T &gt;">
+<area shape="rect" id="node9" href="$classflow_1_1samples_1_1generic_1_1generator.html" title="Concrete producer that generates packets by calling a parameter functor." alt="" coords="472,45,627,86"/>
+<area shape="rect" id="node11" href="$classflow_1_1transformer.html" title="transformer\&lt; T, T \&gt;" alt="" coords="479,111,619,137"/>
+<area shape="rect" id="node2" href="$classflow_1_1node.html" title="Base class common to all nodes." alt="" coords="150,56,234,83"/>
+<area shape="rect" id="node4" href="$classflow_1_1named.html" title="Base class for objects that are named." alt="" coords="6,56,101,83"/>
+<area shape="rect" id="node6" href="$classdetail_1_1producer.html" title="producer" alt="" coords="155,107,229,133"/>
+<area shape="rect" id="node13" href="$classflow_1_1samples_1_1generic_1_1delay.html" title="Concrete transformer that adds a delay to a packet&#39;s consumption time." alt="" coords="675,5,829,46"/>
+<area shape="rect" id="node15" href="$classflow_1_1samples_1_1generic_1_1tee.html" title="Concrete transformer that clones one input packet to multiple output packets." alt="" coords="675,70,829,111"/>
+<area shape="rect" id="node17" href="$classflow_1_1samples_1_1math_1_1adder.html" title="Concrete transformer that uses operator+= to sum input packets." alt="" coords="681,135,823,177"/>
+<area shape="rect" id="node19" href="$classflow_1_1samples_1_1math_1_1const__adder.html" title="Concrete transformer that uses operator+= to add a constant value to input packets." alt="" coords="681,201,823,242"/>
+</map>

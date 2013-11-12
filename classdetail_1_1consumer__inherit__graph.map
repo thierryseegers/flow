@@ -1,0 +1,11 @@
+<map id="consumer" name="consumer">
+<area shape="rect" id="node3" href="$classflow_1_1consumer.html" title="flow::consumer\&lt; C \&gt;" alt="" coords="133,20,280,47"/>
+<area shape="rect" id="node7" href="$classflow_1_1consumer.html" title="Base class from which concrete pure consumers derive." alt="" coords="133,77,280,104"/>
+<area shape="rect" id="node5" href="$classflow_1_1transformer.html" title="Base class from which concrete transformers derive." alt="" coords="339,5,472,46"/>
+<area shape="rect" id="node9" href="$classflow_1_1samples_1_1generic_1_1ostreamer.html" title="Concrete consumer that outputs packets to a parameter std::ostream." alt="" coords="328,70,483,111"/>
+<area shape="rect" id="node11" href="$classflow_1_1transformer.html" title="transformer\&lt; T, T \&gt;" alt="" coords="335,136,475,163"/>
+<area shape="rect" id="node13" href="$classflow_1_1samples_1_1generic_1_1delay.html" title="Concrete transformer that adds a delay to a packet&#39;s consumption time." alt="" coords="531,30,685,71"/>
+<area shape="rect" id="node15" href="$classflow_1_1samples_1_1generic_1_1tee.html" title="Concrete transformer that clones one input packet to multiple output packets." alt="" coords="531,95,685,137"/>
+<area shape="rect" id="node17" href="$classflow_1_1samples_1_1math_1_1adder.html" title="Concrete transformer that uses operator+= to sum input packets." alt="" coords="537,161,679,202"/>
+<area shape="rect" id="node19" href="$classflow_1_1samples_1_1math_1_1const__adder.html" title="Concrete transformer that uses operator+= to add a constant value to input packets." alt="" coords="537,226,679,267"/>
+</map>

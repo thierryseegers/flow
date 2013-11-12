@@ -1,0 +1,7 @@
+<map id="include/samples/generic.h" name="include/samples/generic.h">
+<area shape="rect" id="node3" href="$node_8h.html" title="Defines the node base classes and the pin classes." alt="" coords="347,80,409,107"/>
+<area shape="rect" id="node34" href="$timer_8h.html" title="Defines the flow::timer base class and the flow::monotonous_timer concrete timer class." alt="" coords="791,80,853,107"/>
+<area shape="rect" id="node5" href="$named_8h.html" title="Defines the named class." alt="" coords="22,229,94,256"/>
+<area shape="rect" id="node9" href="$packet_8h.html" title="Defines the flow::packet class." alt="" coords="473,229,543,256"/>
+<area shape="rect" id="node15" href="$pipe_8h.html" title="Defines the flow::pipe class." alt="" coords="247,155,303,181"/>
+</map>

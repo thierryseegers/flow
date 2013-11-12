@@ -1,0 +1,6 @@
+<map id="flow::samples::generic::ostreamer&lt; T &gt;" name="flow::samples::generic::ostreamer&lt; T &gt;">
+<area shape="rect" id="node2" href="$classflow_1_1consumer.html" title="Base class from which concrete pure consumers derive." alt="" coords="31,155,177,181"/>
+<area shape="rect" id="node4" href="$classflow_1_1node.html" title="Base class common to all nodes." alt="" coords="10,80,93,107"/>
+<area shape="rect" id="node6" href="$classflow_1_1named.html" title="Base class for objects that are named." alt="" coords="5,5,99,32"/>
+<area shape="rect" id="node8" href="$classdetail_1_1consumer.html" title="consumer" alt="" coords="118,80,196,107"/>
+</map>
