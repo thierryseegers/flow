@@ -22,6 +22,7 @@ add_subdirectory(tests)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION . FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY ${PROJECT_BINARY_DIR}/documentation/htdocs DESTINATION documentation)
 
-set(CPACK_GENERATOR ZIP)
+set(CPACK_GENERATOR "ZIP;TGZ")
+set(CPACK_OUTPUT_FILE_PREFIX packages)
 set(CPACK_PACKAGE_FILE_NAME flow_${VERSION_MAJOR}_${VERSION_MINOR}) 
 include(CPack)
