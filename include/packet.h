@@ -39,7 +39,7 @@ public:
 	virtual ~packet() {}
 
 	//!\brief Returns the number of bytes in this packet.
-	virtual size_t size() const { return sizeof(T); }
+	static size_t size() { return sizeof(T); }
 
 	//!\brief Reference to the data this packet is carrying.
 	virtual T& data() { return d_data; }
