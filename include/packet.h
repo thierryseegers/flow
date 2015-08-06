@@ -49,6 +49,9 @@ public:
 
 	//!\brief Reference to the time of consumption.
 	virtual time_point_type& consumption_time() { return d_consumption_time; }
+
+    //!\brief Reference to the time of consumption.
+    virtual const time_point_type& consumption_time() const { return d_consumption_time; }
 };
 
 }
