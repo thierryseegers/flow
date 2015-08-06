@@ -81,7 +81,7 @@ public:
 		nodes_t *n;
 		nodes_t::iterator i;
 
-		if(n = find(name_r, i))
+		if((n = find(name_r, i)))
 		{
 			i->second->sever();
 			p = i->second;
