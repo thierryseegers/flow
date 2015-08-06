@@ -81,7 +81,7 @@ class monotonous_timer : public timer
 	std::mutex d_stopped_m;
 
 public:
-	//!\param interval The time to wait between notifications. Must be a duration typedef from <chrono>.
+	//!\param interval The time to wait between notifications. Must be a duration typedef from \<chrono\>.
 	template<typename Duration>
 	monotonous_timer(const Duration& interval) : d_interval(std::chrono::duration_cast<std::chrono::milliseconds>(interval)) {}
 
