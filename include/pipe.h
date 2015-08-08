@@ -26,7 +26,7 @@ class outpin;
 //!
 //! Packets will accumulate in pipes if the node at the consuming end does not consume them fast enough.
 //! If packet accumulation is expected but memory usage is a concern, length and weight can be specified.
-//! If a pipe has reached it's length and weight limit, pushed packets will instead be discarded.
+//! If a pipe has reached it's length or weight limit, pushed packets will instead be discarded.
 //! A graph that produces more data than it consumes is unbalanced and should be adjusted.
 template<typename T>
 class pipe : public named
