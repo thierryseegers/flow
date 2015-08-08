@@ -20,7 +20,7 @@ public:
 	{
 		std::unique_ptr<flow::packet<T>> packet_p(new flow::packet<T>(t));
 
-		flow::producer<T>::output(0).push(std::move(packet_p));
+		flow::producer<T>::output(0).push(packet_p);
 	}
 
 	template<typename Duration>
@@ -28,7 +28,7 @@ public:
 	{
 		std::unique_ptr<flow::packet<T>> packet_p(new flow::packet<T>(t, d));
 
-		flow::producer<T>::output(0).push(std::move(packet_p));
+		flow::producer<T>::output(0).push(packet_p);
 	}
 };
 

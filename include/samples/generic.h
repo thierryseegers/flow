@@ -77,7 +77,7 @@ public:
 		{
 			std::unique_ptr<packet<T>> packet_p(new packet<T>(d_gen_f()));
 
-			producer<T>::output(0).push(std::move(packet_p));
+			producer<T>::output(0).push(packet_p);
 		}
 	}
 };
@@ -159,10 +159,10 @@ public:
 		for(size_t s = 1; s != producer<T>::outs(); ++s)
 		{
 			std::unique_ptr<packet<T>> copy_p(new packet<T>(*packet_p));
-			producer<T>::output(s).push(std::move(copy_p));
+			producer<T>::output(s).push(copy_p);
 		}
 
-		producer<T>::output(0).push(std::move(packet_p));
+		producer<T>::output(0).push(packet_p);
 	}
 };
 
@@ -196,7 +196,7 @@ public:
 			packet_p->consumption_time() += d_offset;
 		}
 
-		producer<T>::output(0).push(std::move(packet_p));
+		producer<T>::output(0).push(packet_p);
 	}
 };
 

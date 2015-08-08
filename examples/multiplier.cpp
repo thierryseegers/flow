@@ -63,7 +63,7 @@ public:
 		unique_ptr<flow::packet<string>> p(new flow::packet<string>(ss.str()));
 
 		// Output it.
-		flow::producer<string>::output(0).push(move(p));
+		flow::producer<string>::output(0).push(p);
 	}
 };
 

@@ -272,14 +272,14 @@ public:
 	//! If the pipe has reached capacity, the call to pipe::push will fail and packet_p will remain valid.
 	//!
 	//!\return \c true if the packet was successfully moved to the pipe, false otherwise.
-	virtual bool push(std::unique_ptr<packet<T>> packet_p)
+	virtual bool push(std::unique_ptr<packet<T>>& packet_p)
 	{
 		if(!d_pipe_sp) return false;
 
 		inpin<T>* inpin_p = 0;
 		{
 			std::lock_guard<std::mutex> lg(*d_pipe_sp->second);
-			if(d_pipe_sp->first.push(std::move(packet_p)))
+			if(d_pipe_sp->first.push(packet_p))
 			{
 				inpin_p = d_pipe_sp->first.output();
 			}

@@ -25,7 +25,7 @@ public:
 			{
 				std::unique_ptr<flow::packet<T>> packet_p(new flow::packet<T>(T()));
 
-				outpin.push(std::move(packet_p));
+				outpin.push(packet_p);
 			}
 		}
 	}
@@ -50,7 +50,8 @@ public:
 
 	virtual void ready(size_t i)
 	{
-		flow::producer<T>::output(i).push(std::move(flow::consumer<T>::input(i).pop()));
+        auto p(flow::consumer<T>::input(i).pop());
+		flow::producer<T>::output(i).push(p);
 		++received[i];
 	}
 

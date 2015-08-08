@@ -65,7 +65,7 @@ public:
 		std::unique_ptr<packet<T>> sum_up(new packet<T>(sum));
 
 		// Output it.
-		producer<T>::output(0).push(std::move(sum_up));
+		producer<T>::output(0).push(sum_up);
 	}
 };
 
@@ -89,7 +89,7 @@ public:
 
 		packet_p->data() += d_addend;
 
-		producer<T>::output(0).push(std::move(packet_p));
+		producer<T>::output(0).push(packet_p);
 	}
 };
 

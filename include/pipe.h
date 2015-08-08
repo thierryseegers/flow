@@ -134,7 +134,7 @@ public:
 	//!				   If this call is unsuccessful, packet_p will still point to the packet after the call.
 	//!
 	//!\return true if the packet was successfully moved to the pipe, false otherwise.
-	virtual bool push(std::unique_ptr<packet<T>> packet_p)
+	virtual bool push(std::unique_ptr<packet<T>>& packet_p)
 	{
 		if(d_max_length && (d_packets.size() == d_max_length)) return false;
 		if(d_max_weight && (d_weight + packet_p->size() > d_max_weight)) return false;
