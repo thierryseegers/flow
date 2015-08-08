@@ -1,14 +1,19 @@
-file(GLOB headers *.h)
-file(GLOB sources *.cpp)
-
-include_directories(${PROJECT_SOURCE_DIR}/include) 
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_CXX_FLAGS -std=c++0x)
 	add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # Required to enable this_thread:: sleep_for and ::sleep_until on certain distros.
 endif()
 
-add_executable(functional ${headers} ${sources})
+add_executable(functional
+    counted.h
+    dummies.h
+    manual.h
+    functional.cpp)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set_source_files_properties(functional.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
+endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)
 	target_link_libraries(functional pthread)
